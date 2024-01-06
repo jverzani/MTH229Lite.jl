@@ -10,9 +10,11 @@ const current_plot = Ref{Plot}()
 
 Create a plot. Returns a `Plot` instance from [PlotlyLight](https://github.com/JuliaComputing/PlotlyLight.jl)
 
+Keyword arguments include `width` and `height`, `xlims` and `ylims`, `legend`.
+
 Provides an interface like `Plots.plot` for plotting a function `f` using `PlotlyLight`. This just scratches the surface, but `PlotLight` allows full acces to the underlying `JavaScript` [library](https://plotly.com/javascript/).
 
-The provided "Plots" like functions are `plot`, `plot!`, `scatter`, `scatter!`, `annotate`, `annotate!`, `title!`.
+The provided "Plots" like functions are [`plot`](@ref), [`plot!`](@ref), [`scatter`](@ref), `scatter!`, [`annotate!`](@ref),  [`title!`](@ref), [`xlims!`](@ref) and [`ylims`](@ref).
 
 # Example
 
@@ -216,7 +218,7 @@ function plotly_config(x,y=nothing;
     c, l
 end
 
-
+## -----
 
 """
     plotif(f, g, a, b)
