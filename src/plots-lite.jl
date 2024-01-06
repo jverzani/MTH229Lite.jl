@@ -14,7 +14,7 @@ Keyword arguments include `width` and `height`, `xlims` and `ylims`, `legend`.
 
 Provides an interface like `Plots.plot` for plotting a function `f` using `PlotlyLight`. This just scratches the surface, but `PlotLight` allows full acces to the underlying `JavaScript` [library](https://plotly.com/javascript/).
 
-The provided "Plots" like functions are [`plot`](@ref), [`plot!`](@ref), [`scatter`](@ref), `scatter!`, [`annotate!`](@ref),  [`title!`](@ref), [`xlims!`](@ref) and [`ylims`](@ref).
+The provided "Plots" like functions are [`plot`](@ref), [`plot!`](@ref), [`scatter`](@ref), `scatter!`, [`annotate!`](@ref),  [`title!`](@ref), [`xlims!`](@ref) and [`ylims!`](@ref).
 
 # Example
 
