@@ -13,7 +13,7 @@ Exports:
 * `bisection` and `newton` for solving `f(x) = 0`. This package also exports `Roots` which exposes `find_zero` and `find_zeros` (and their aliases`fzero`, `fzeros`).
 * The operator `'` is overloaded for functions to find the derivative using the `FowardDiff` package
 * The `SimpleExpressions` package is included to create simple expressions to use in place of functions. There is no `SymPy` package provided, as is done with `MTH229`.
-* The `plot` and `plot!` functions provided are modeled after those in `Plots.jl` but utilize `PlotlyLight` as a plotting backend, as it requires far fewer resources than `Plots`. See the docstring for `plot`
+* The `plot` and `plot!` functions provided are modeled after those in `Plots.jl` but utilize `PlotlyLight` as a plotting backend, as it requires far fewer resources than `Plots`. See the docstring for [`plot`](@ref) for an example.
 """
 module MTH229Lite
 

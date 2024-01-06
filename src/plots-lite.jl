@@ -173,6 +173,7 @@ function size!(p::Plot; width=nothing, height=nothing)
 end
 size!(;width=nothing, height=nothing) = size(current_plot[]; width, height)
 
+"`xlims!(p, lims)` set `x` limits of plot"
 function xlims!(p::Plot, lims)
     p.layout.xaxis.range = lims
     p
@@ -180,6 +181,7 @@ end
 xlims!(p::Plot, ::Nothing) = p
 xlims!(lims) = xlims!(current_plot[], lims)
 
+"`ylims!(p, lims)` set `y` limits of plot"
 function ylims!(p::Plot, lims)
     p.layout.yaxis.range = lims
     p
@@ -225,12 +227,14 @@ end
 
 Plot f colored depending on g >= 0 or not.
 """
-function plotif(f,g, a, b; width=800, height=600, kwargs...)
+function plotif(f,g, a, b; width=800, height=600,
+                kwargs...)
     xs = collect(range(a, b, length=251))
     cs = identify_colors(g, xs)
     cols, l = rle(cs)
     xs′ = cumsum(l); pushfirst!(xs′, 1)
     p = Plot(Config(), Config(), Config(); kwargs...)
+    p.layout.showlegend = false
     size!(p; width=width, height=height)
     for i ∈ eachindex(cols)
 	us = xs[xs′[i]:xs′[i+1]]
