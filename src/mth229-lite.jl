@@ -6,12 +6,22 @@ Base.adjoint(f::Function) = x -> ForwardDiff.derivative(f, float(x))
 
 
 # simple functions
+"`tangent(f,c)` returns a function computing the tangent line of `f` at `c`"
 tangent(f, c) = x -> f(c) + f'(c)*(x-c)
+
+"`secant(f,a,b)` returns a function computing the secant line of `f` between `a` and `b`"
 secant(f, a, b) = x -> f(a) + (f(b)-f(a)) / (b-a) * (x - a)
+
+"`fisheye(f)` changes domain of function `f` to `(-pi/2, pi/2)`"
 fisheye(f)=x->atan(f(tan(x)))
-newton(f, x; kwargs...) = find_zero((f, f'), x, Roots.Newton(); kwargs...)
+
+"`rangeclam(f, [hi], [lo]; replacement)` returns f function which has the value of `replacement` when `lo <= f(x) <= hi` doesn't hold."
 rangeclamp(f, hi=20, lo=-hi; replacement=NaN) = x -> lo < f(x) < hi ? f(x) : replacement
 
+"`newton(f, x)` easy to use Newton's method; derivative computed using `f'`"
+newton(f, x; kwargs...) = find_zero((f, f'), x, Roots.Newton(); kwargs...)
+
+"`bisection(f, a, b)` naive bisection algorithm with primitive graphic. Use `find_zero(f, (a,b))` (or `fzero(f, a, b)`) for a more robust method."
 function bisection(f::Function, a, b)
     a,b = sort([a,b])
 
@@ -72,6 +82,7 @@ function bisection(f::Function, a, b)
     M
 end
 
+"`lim(f, c; [dir=\"-\"])` makes a table of values of `f` as `x` approaches `c`."
 function lim(f::Function, c::Real; n::Int=6, dir="+")
     hs = [(1/10)^i for i in 1:n] # close to 0
     if dir == "+"
@@ -83,7 +94,7 @@ function lim(f::Function, c::Real; n::Int=6, dir="+")
     [xs ys]
 end
 
-#
+"`signchart(f, a, b)` identifies zeros of `f` (or discontinuities which jump over `0` and classifies sign change at each"
 function sign_chart(f, a, b; atol=1e-6)
     pm(x) = x < 0 ? "-" : x > 0 ? "+" : "0"
     summarize(f,cp,d) = (DNE_0_∞=cp, sign_change=pm(f(cp-d)) * " → " * pm(f(cp+d)))
@@ -122,7 +133,11 @@ function sign_chart(f, a, b; atol=1e-6)
     summarize.([f], zs, d)
 end
 
+"""
+    riemann(f, a, b, n; method="right")
 
+Simple Riemann sum, Method is one of "right", "left", "trapezoid", or "simpsons".
+"""
 function riemann(f::Function, a::Real, b::Real, n::Int; method="right")
     if method == "right"
         meth = (f,l,r) -> f(r) * (r-l)
