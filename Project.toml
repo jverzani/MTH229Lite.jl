@@ -20,7 +20,7 @@ PlotlyLight = "0.7"
 QuadGK = "2"
 Reexport = "1"
 Roots = "1,2"
-LinearAlegebra = "1.9"
+LinearAlgebra = "1.9"
 Test = "1.9"
 julia = "1.9"
 
