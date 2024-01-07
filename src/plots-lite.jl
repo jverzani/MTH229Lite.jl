@@ -225,7 +225,7 @@ end
 """
     plotif(f, g, a, b)
 
-Plot f colored depending on g >= 0 or not.
+Plot `f` colored depending on `g > 0` or `g < 0`.
 """
 function plotif(f,g, a, b; width=800, height=600,
                 kwargs...)

@@ -15,64 +15,64 @@ function unzip(f::Function, a, b)
 end
 
 
-    ## plotif
-    function identify_colors(g, xs, colors=(:red, :blue, :black))
-        F = (a,b) -> begin
-            ga,gb=g(a),g(b)
-            ga * gb < 0 && return nothing
-            ga >= 0 && return true
-            return false
-        end
-        find_colors(F, xs, colors)
+## plotif
+function identify_colors(g, xs, colors=(:red, :blue, :black))
+    F = (a,b) -> begin
+        ga,gb=g(a),g(b)
+        ga * gb < 0 && return nothing
+        ga >= 0 && return true
+        return false
     end
+    find_colors(F, xs, colors)
+end
 
-    # F(a,b) returns true, false, or nothing
-    function find_colors(F, xs, colors=(:red, :blue, :black))
-        n = length(xs)
-        cols = repeat([colors[1]], n)
-        for i in 1:n-1
-            a,b = xs[i], xs[i+1]
-            val = F(a,b)
-            if val == nothing
-                cols[i] = colors[3]
-            elseif val
-                cols[i] = colors[1]
-            else
-                cols[i] = colors[2]
-            end
+# F(a,b) returns true, false, or nothing
+function find_colors(F, xs, colors=(:red, :blue, :black))
+    n = length(xs)
+    cols = repeat([colors[1]], n)
+    for i in 1:n-1
+        a,b = xs[i], xs[i+1]
+        val = F(a,b)
+        if val == nothing
+            cols[i] = colors[3]
+        elseif val
+            cols[i] = colors[1]
+        else
+            cols[i] = colors[2]
         end
+    end
         cols[end] = cols[end-1]
-        cols
-    end
+    cols
+end
 
+# from stats base
+function rle(v::Vector{T}) where {T}
+    n = length(v)
+    vals = T[]
+    lens = Int[]
 
-    function rle(v::Vector{T}) where {T} # stats base
-        n = length(v)
-        vals = T[]
-        lens = Int[]
+    n>0 || return (vals,lens)
 
-        n>0 || return (vals,lens)
+    cv = v[1]
+    cl = 1
 
-        cv = v[1]
-        cl = 1
-
-        i = 2
-        @inbounds while i <= n
-            vi = v[i]
-            if vi == cv
-                cl += 1
-            else
-                push!(vals, cv)
-                push!(lens, cl)
-                cv = vi
-                cl = 1
-            end
-            i += 1
+    i = 2
+    @inbounds while i <= n
+        vi = v[i]
+        if vi == cv
+            cl += 1
+        else
+            push!(vals, cv)
+            push!(lens, cl)
+            cv = vi
+            cl = 1
         end
-
-        # the last section
-        push!(vals, cv)
-        push!(lens, cl)
-
-        return (vals, lens)
+        i += 1
     end
+
+    # the last section
+    push!(vals, cv)
+    push!(lens, cl)
+
+    return (vals, lens)
+end
