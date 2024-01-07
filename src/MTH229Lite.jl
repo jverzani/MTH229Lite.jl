@@ -22,7 +22,7 @@ using Reexport
 @reexport using SpecialFunctions
 @reexport using QuadGK
 @reexport using LinearAlgebra
-#@reexport using SimpleExpressions
+@reexport using SimpleExpressions
 @reexport using PlotlyLight
 
 using PlotUtils
