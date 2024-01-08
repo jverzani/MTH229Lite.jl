@@ -13,7 +13,7 @@ Create a plot. Returns a `Plot` instance from [PlotlyLight](https://github.com/J
 
 Keyword arguments include `width` and `height`, `xlims` and `ylims`, `legend`.
 
-Provides an interface like `Plots.plot` for plotting a function `f` using `PlotlyLight`. This just scratches the surface, but `PlotLight` allows full acces to the underlying `JavaScript` [library](https://plotly.com/javascript/).
+Provides an interface like `Plots.plot` for plotting a function `f` using `PlotlyLight`. This just scratches the surface, but `PlotlyLight` allows full acces to the underlying `JavaScript` [library](https://plotly.com/javascript/).
 
 The provided "Plots" like functions are [`plot`](@ref), [`plot!`](@ref), [`scatter`](@ref), `scatter!`, [`annotate!`](@ref),  [`title!`](@ref), [`xlims!`](@ref) and [`ylims!`](@ref).
 
@@ -28,7 +28,7 @@ title!("Sine and cosine and where they intersect in [0,2π]")
 ```
 
 !!! note "Warning"
-    You may need to rund the first plot cell twice to see an image.
+    You may need to run the first plot cell twice to see an image.
 """
 function plot(x, y;
               kwargs...)
