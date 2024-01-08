@@ -20,7 +20,7 @@ module MTH229Lite
 using Reexport
 @reexport using LinearAlgebra
 
-@info "Loading `PlotlyLight` for plotting. Also adding `plot` etc."
+@info "Loading `PlotlyLight` for plotting. Also adding `plot` etc. See `?plot` for details."
 @reexport using PlotlyLight
 @info "Loading `Roots` for solving `f(x)=0`: `fzero`, `fzeros`, etc."
 @reexport using Roots

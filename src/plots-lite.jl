@@ -25,6 +25,9 @@ x0 = [pi/4, 5pi/4]
 scatter!(x0, sin.(x0), markersize=10)
 title!("Sine and cosine and where they intersect in [0,2π]")
 ```
+
+!!! note "Warning"
+    You may need to rund the first plot cell twice to see an image.
 """
 function plot(x, y;
               kwargs...)
