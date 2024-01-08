@@ -18,14 +18,21 @@ Exports:
 module MTH229Lite
 
 using Reexport
+@reexport using LinearAlgebra
+
+@info "Loading PlotlyLight for plotting. Also adding `plot` etc."
+@reexport using PlotlyLight
+@info "Loading Roots for solve f(x)=0: `fzero`, `fzeros`, etc."
 @reexport using Roots
 @reexport using SpecialFunctions
+@info "Loading QuadGK for integration: `quadgk`
 @reexport using QuadGK
-@reexport using LinearAlgebra
+@info "Loading SimpleExpressions for using a symbolic value. No SymPy is available"
 @reexport using SimpleExpressions
-@reexport using PlotlyLight
 
 using PlotUtils
+
+@info "Loading ForwardDIff and overloading `f'` notation for derivatives"
 using ForwardDiff
 
 export e, tangent, secant, fisheye, rangeclamp
