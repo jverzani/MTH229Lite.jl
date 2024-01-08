@@ -20,21 +20,22 @@ module MTH229Lite
 using Reexport
 @reexport using LinearAlgebra
 
-@info "Loading PlotlyLight for plotting. Also adding `plot` etc."
+@info "Loading `PlotlyLight` for plotting. Also adding `plot` etc."
 @reexport using PlotlyLight
-@info "Loading Roots for solve f(x)=0: `fzero`, `fzeros`, etc."
+@info "Loading `Roots` for solving `f(x)=0`: `fzero`, `fzeros`, etc."
 @reexport using Roots
 @reexport using SpecialFunctions
-@info "Loading QuadGK for integration: `quadgk`
+@info "Loading `QuadGK` for integration: `quadgk`"
 @reexport using QuadGK
-@info "Loading SimpleExpressions for using a symbolic value. No SymPy is available"
+@info "Loading `SimpleExpressions` for using a symbolic value. No `SymPy` is available"
 @reexport using SimpleExpressions
 
 using PlotUtils
 
-@info "Loading ForwardDIff and overloading `f'` notation for derivatives"
+@info "Loading `ForwardDiff` and overloading `f'` notation for derivatives"
 using ForwardDiff
 
+@info "See `?MTH229Lite` for a few more details."
 export e, tangent, secant, fisheye, rangeclamp
 export lim, bisection, newton, sign_chart, riemann
 export plot, plot!, scatter, scatter!, annotate, annotate!, title!, size!, xlims!, ylims!
