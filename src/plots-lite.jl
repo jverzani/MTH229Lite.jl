@@ -3,6 +3,7 @@
 ## create a Plots.plot like interface for PlotlyLight.Plot
 
 const current_plot = Ref{Plot}()
+const first_plot = Ref{Bool}(true)
 
 """
     plot(x, y; kwargs...)
@@ -33,6 +34,10 @@ function plot(x, y;
               kwargs...)
     p = Plot(Config(), Config(), Config() )
     current_plot[] = p
+    if first_plot[]
+        @info "For the first plot, you may need to re-run your command to see the plot"
+        first_plot[] = false
+    end
     plot!(p, x, y; kwargs...)
     p
 end
@@ -41,6 +46,10 @@ function plot(f::Function, a::Real, b::Real;
               kwargs...)
     p = Plot(Config(), Config(), Config() )
     current_plot[] = p
+    if first_plot[]
+        @info "For the first plot, you may need to re-run your command to see the plot"
+        first_plot[] = false
+    end
     plot!(p, f, a, b; kwargs...)
     p
 end
