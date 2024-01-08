@@ -3,7 +3,7 @@ const e = exp(1)
 
 # f'
 Base.adjoint(f::Function) = x -> ForwardDiff.derivative(f, float(x))
-
+Base.adjoint(f::SimpleExpressions.AbstractSymbolic) = SimpleExpressions.D(f)
 
 # simple functions
 "`tangent(f,c)` returns a function computing the tangent line of `f` at `c`"
