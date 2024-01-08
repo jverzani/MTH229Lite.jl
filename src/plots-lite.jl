@@ -183,7 +183,7 @@ function size!(p::Plot; width=nothing, height=nothing)
     !isnothing(height) && (p.layout.height=height)
     p
 end
-size!(;width=nothing, height=nothing) = size(current_plot[]; width, height)
+size!(;width=nothing, height=nothing) = size!(current_plot[]; width, height)
 
 "`xlims!(p, lims)` set `x` limits of plot"
 function xlims!(p::Plot, lims)

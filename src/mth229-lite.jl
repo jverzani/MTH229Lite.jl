@@ -5,6 +5,9 @@ const e = exp(1)
 Base.adjoint(f::Function) = x -> ForwardDiff.derivative(f, float(x))
 Base.adjoint(f::SimpleExpressions.AbstractSymbolic) = SimpleExpressions.D(f)
 
+# solve just seem natural here
+Roots.CommonSolve.solve(ex::SimpleExpressions.SymbolicEquation, x₀, args...; kwargs...) = find_zero(ex, x₀, args...; kwargs...)
+
 # simple functions
 "`tangent(f,c)` returns a function computing the tangent line of `f` at `c`"
 tangent(f, c) = x -> f(c) + f'(c)*(x-c)
