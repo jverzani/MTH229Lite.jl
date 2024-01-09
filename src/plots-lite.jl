@@ -50,6 +50,7 @@ function plot(f::Function, a::Real, b::Real;
     p
 end
 
+
 # make a new plot
 function _new_plot(;
                    width=800, height=600,
@@ -274,6 +275,8 @@ function plot(ex::SimpleExpressions.SymbolicEquation, a::Real, b::Real; kwargs..
     plot!(p, ex, a, b; kwargs...)
 
 end
+plot(f::SimpleExpressions.SymbolicEquation, I::Interval; kwargs...) = plot(f, I.a, I.b; kwargs...)
+
 
 function plot!(p::Plot, ex::SimpleExpressions.SymbolicEquation, a::Real, b::Real; kwargs...)
     lhs, rhs = ex.lhs, ex.rhs
