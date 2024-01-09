@@ -53,6 +53,7 @@ x0 = [pi/4, 5pi/4]
 scatter!(x0, sin.(x0), markersize=10)
 annotate!(tuple(zip(x0, sin.(x0), ("A", "B"))...), halign="left", pointsize=12)
 title!("Sine and cosine and where they intersect in [0,2π]")
+ylims!((-3/2, 3/2))
 ```
 
 !!! note "Warning"
