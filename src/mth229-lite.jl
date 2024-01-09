@@ -5,7 +5,8 @@ const e = exp(1)
 Base.adjoint(f::Function) = x -> ForwardDiff.derivative(f, float(x))
 Base.adjoint(f::SimpleExpressions.AbstractSymbolic) = SimpleExpressions.D(f)
 
-# solve just seem natural here
+# solve just seems natural here
+"`solve(ex::SymbolicEquation, x₀, args...; kwargs...)` calls `find_zero` to solve equation`."
 Roots.CommonSolve.solve(ex::SimpleExpressions.SymbolicEquation, x₀, args...; kwargs...) = find_zero(ex, x₀, args...; kwargs...)
 
 struct Interval{T}
@@ -19,9 +20,11 @@ function Base.iterate(i::Interval, state=nothing)
     nothing
 end
 ## hacky way to make solve(ex, a..b) dispatch to find_zeros(ex, (a,b))
-Roots.CommonSolve.solve(ex::SimpleExpressions.SymbolicEquation, x₀::Interval) =
-    find_zeros(ex, (x₀.a, x₀.b))
+"`solve(ex::SymbolicEquation, I::Interval; kwargs...)` calls `find_zeros` to solve equation`. An interval is specified with `..`."
+Roots.CommonSolve.solve(ex::SimpleExpressions.SymbolicEquation, I::Interval; kwargs...) =
+    find_zeros(ex, (I.a, I.b); kwargs...)
 
+## ----
 
 # simple functions
 "`tangent(f,c)` returns a function computing the tangent line of `f` at `c`"
