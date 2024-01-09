@@ -6,53 +6,71 @@ const current_plot = Ref{Plot}()
 const first_plot = Ref{Bool}(true)
 
 """
-    plot(x, y; kwargs...)
+    plot(x, y; [linecolor], [linewidth], [legend], kwargs...)
     plot(f::Function, a, b; kwargs...)
 
-Create a plot. Returns a `Plot` instance from [PlotlyLight](https://github.com/JuliaComputing/PlotlyLight.jl)
+Create a line plot.
 
-Keyword arguments include `width` and `height`, `xlims` and `ylims`, `legend`.
+Returns a `Plot` instance from [PlotlyLight](https://github.com/JuliaComputing/PlotlyLight.jl)
 
-Provides an interface like `Plots.plot` for plotting a function `f` using `PlotlyLight`. This just scratches the surface, but `PlotlyLight` allows full acces to the underlying `JavaScript` [library](https://plotly.com/javascript/).
+* x,y points to plot. NaN values in `y` break the line
+* linecolor: color of line
+* linewidth: width of line
 
-The provided "Plots" like functions are [`plot`](@ref), [`plot!`](@ref), [`scatter`](@ref), `scatter!`, [`annotate!`](@ref),  [`title!`](@ref), [`xlims!`](@ref) and [`ylims!`](@ref).
+Other keyword arguments include `width` and `height`, `xlims` and `ylims`, `legend`.
+
+Provides an interface like `Plots.plot` for plotting a function `f` using `PlotlyLight`. This just scratches the surface, but `PlotlyLight` allows full access to the underlying `JavaScript` [library](https://plotly.com/javascript/).
+
+The provided "Plots" like functions are [`plot`](@ref), [`plot!`](@ref), [`scatter!`](@ref), `scatter`, [`annotate!`](@ref),  [`title!`](@ref), [`xlims!`](@ref) and [`ylims!`](@ref).
 
 # Example
 
 ```
-plot(sin, 0, 2pi)
+plot(sin, 0, 2pi; legend=false)
 plot!(cos)
 x0 = [pi/4, 5pi/4]
 scatter!(x0, sin.(x0), markersize=10)
+annotate!(tuple(zip(x0, sin.(x0), ("A", "B"))...), halign="left", pointsize=12)
 title!("Sine and cosine and where they intersect in [0,2π]")
 ```
 
 !!! note "Warning"
     You may need to run the first plot cell twice to see an image.
 """
-function plot(x, y;
-              kwargs...)
-    p = Plot(Config(), Config(), Config() )
-    current_plot[] = p
-    if first_plot[]
-        @info "For the first plot, you may need to re-run your command to see the plot"
-        first_plot[] = false
-    end
+function plot(x, y; kwargs...)
+    p = _new_plot(; kwargs...)
     plot!(p, x, y; kwargs...)
     p
 end
 
 function plot(f::Function, a::Real, b::Real;
               kwargs...)
+    p = _new_plot(;kwargs...)
+    plot!(p, f, a, b; kwargs...)
+    p
+end
+
+# make a new plot
+function _new_plot(;
+                   width=800, height=600,
+                   xlims=nothing, ylims=nothing,
+                   kwargs...)
     p = Plot(Config(), Config(), Config() )
+
+    size!(p, width=width, height=height)
+    xlims!(p, xlims)
+    ylims!(p, ylims)
+
+
     current_plot[] = p
     if first_plot[]
         @info "For the first plot, you may need to re-run your command to see the plot"
         first_plot[] = false
     end
-    plot!(p, f, a, b; kwargs...)
     p
 end
+
+
 
 """
     plot!([p::Plot], f; kwargs...)
@@ -61,14 +79,11 @@ end
 Used to add a new tract to an existing plot. Like `Plots.plot!`
 """
 function plot!(p::Plot, x, y;
-               width=800, height=600,
-               xlims=nothing, ylims=nothing,
-               legend=false,
+               linecolor=nothing,
+               linewidth = nothing,
+               legend=nothing,
                kwargs...)
 
-    size!(p, width=width, height=height)
-    xlims!(p, xlims)
-    ylims!(p, ylims)
 
     nans = findall(isnan, y)
     if !isempty(nans)
@@ -77,15 +92,23 @@ function plot!(p::Plot, x, y;
             idx = l:(r-1)
             l = r + 1
             length(idx) <= 0 && continue
-            d, _ = plotly_config(x[idx], y[idx]; showlegend=legend, kwargs...)
-            push!(p.data,d)
+            c = Config(x = x[idx], y=y[idx])
+            !isnothing(linewidth) && (c.line.width=linewidth)
+            !isnothing(linecolor) && (c.line.color=linecolor)
+
+            push!(p.data,c)
             l = r+1
         end
     else
-        d, l = plotly_config(x,y; kwargs...)
-        push!(p.data, d)
+        c = Config(; x, y)
+        !isnothing(linewidth) && (c.line.width=linewidth)
+        !isnothing(linecolor) && (c.line.color=linecolor)
+
+        push!(p.data, c)
     end
-    #merge!(p.layout, l)
+
+    # layout
+    legend!(p, legend)
     p
 end
 
@@ -108,7 +131,7 @@ plot!(x, y; kwargs...) =  plot!(current_plot[], x, y; kwargs...)
 plot!(f::Function; kwargs...) =  plot!(current_plot[], f; kwargs...)
 
 """
-    scatter(x, y; markershape, markercolor, markersize, kwargs...)
+    scatter(x, y; [markershape], [markercolor], [markersize], kwargs...)
     scatter!([p::Plot], x, y; kwargs...)
 
 Place point on a plot.
@@ -116,48 +139,64 @@ Place point on a plot.
 * `markercolor`: color e.g. "red"
 * `markersize`:  size, as an integer
 """
-function scatter(x, y; kwargs...)
-    p = Plot()
-    current_plot[] = p
-    scatter!(p, x, y; kwargs...)
-    p
-end
-
 function scatter!(p::Plot, x, y;
                   markershape = nothing,
                   markersize = nothing,
                   markercolor = nothing,
+                  legend=nothing,
                   kwargs...)
-    cfg, l = plotly_config(x, y; series="markers", type="scatter")
+
+    cfg = Config(;x, y, mode="markers", type="scatter")
     !isnothing(markershape) && (cfg.marker.symbol = markershape)
-    !isnothing(markersize) && (cfg.marker.size = markersize)
+    !isnothing(markersize)  && (cfg.marker.size = markersize)
     !isnothing(markercolor) && (cfg.marker.color = markercolor)
 
     push!(p.data, cfg)
+
+    # layout
+    legend!(p, legend)
+
     p
 end
 scatter!(x, y; kwargs...) = scatter!(current_plot[], x, y; kwargs...)
 
+function scatter(x, y; kwargs...)
+    p = _new_plot(; kwargs...)
+    scatter!(p, x, y; kwargs...)
+    p
+end
+
 
 """
-    annotate!([p::Plot], x, y, txt; size, color, textposition, kwargs...)
-    annotate!([p::Plot], anns::Tuple; size, color, textposition, kwargs...)
+    annotate!([p::Plot], x, y, txt; [color], [family], [pointsize], [halign], [valign])
+    annotate!([p::Plot], anns::Tuple;  kwargs...)
 
-Add annotations to plot
-* size: text size
+Add annotations to plot.
+
+* x, y, txt: text to add at (x,y)
 * color: text color
-* textposition: one of "top", "bottom", "left", "right", or combinations with `_`
+* family: font family
+* pointsize: text size
+* halign: one of "top", "bottom"
+* valign: one of "left", "right"
 """
 function annotate!(p::Plot, x, y, txt;
-                   size = nothing,
                    color= nothing,
-                   textposition = nothing,
+                   family = nothing,
+                   pointsize = nothing,
+                   halign = nothing,
+                   valign = nothing,
                    kwargs...)
 
-    cfg, l = plotly_config(x, y; text=txt, mode="text")
-    !isnothing(size) && (cfg.textfont.size=size)
-    !isnothing(color) && (cfg.textfont.color=color)
+    cfg = Config(; x, y, text=txt, mode="text", type="scatter")
+
+    textposition = something(halign,"") * something(valign, "")
+    isempty(textposition) && (textposition = nothing)
     !isnothing(textposition) && (cfg.textposition = textposition)
+
+    !isnothing(color) && (cfg.textfont.color=color)
+    !isnothing(family) && (cfg.textfont.family = family)
+    !isnothing(pointsize) && (cfg.textfont.size = pointsize)
 
     push!(p.data, cfg)
     p
@@ -177,6 +216,8 @@ function title!(p::Plot, txt)
     p
 end
 title!(txt) = title!(current_plot[], txt)
+
+legend!(p::Plot, legend=nothing) = !isnothing(legend) && (p.layout.showlegend = legend)
 
 function size!(p::Plot; width=nothing, height=nothing)
     !isnothing(width) && (p.layout.width=width)
@@ -202,35 +243,6 @@ ylims!(p::Plot, ::Nothing) = p
 ylims!(lims) = ylims!(current_plot[], lims)
 
 
-# clean arguments from Plots wiht line attributes
-function plotly_config(x,y=nothing;
-                       linewidth=nothing,
-                       series = nothing,
-                       type = nothing,
-                       mode = nothing,
-                       linecolor = nothing,
-                       ## layout options
-                       legend = nothing,
-                       kwargs...)
-    c = Config(;x)
-    c.line = Config()
-    !isnothing(y) && (c.y = y)
-
-    !isnothing(linewidth) && (c.line.width=linewidth)
-    !isnothing(series) && (c.mode = series)
-    !isnothing(type) && (c.type = type)
-    !isnothing(mode) && (c.mode = mode)
-    !isnothing(linecolor) && (c.line.color=linecolor)
-
-    for (k, v) ∈ kwargs
-        c[k] = v
-    end
-
-    l = Config()
-    !isnothing(legend) && (l.showlegend = legend)
-
-    c, l
-end
 
 ## -----
 
@@ -252,5 +264,22 @@ function plotif(f,g, a, b; width=800, height=600,
 	us = xs[xs′[i]:xs′[i+1]]
 	push!(p.data, Config(x=us, y=f.(us), line=Config(color=cols[i])))
 	end
+    p
+end
+
+## -----
+## Special case for plotting SymbolicEquations
+function plot(ex::SimpleExpressions.SymbolicEquation, a::Real, b::Real; kwargs...)
+    p = _new_plot(; kwargs...)
+    plot!(p, ex, a, b; kwargs...)
+
+end
+
+function plot!(p::Plot, ex::SimpleExpressions.SymbolicEquation, a::Real, b::Real; kwargs...)
+    lhs, rhs = ex.lhs, ex.rhs
+    fl = SimpleExpressions.issymbolic(lhs) ? lhs : ((x) -> lhs)
+    fr = SimpleExpressions.issymbolic(rhs) ? rhs : ((x) -> rhs)
+    plot!(p, fl, a, b; kwargs...)
+    plot!(p, fr, a, b; kwargs...)
     p
 end
