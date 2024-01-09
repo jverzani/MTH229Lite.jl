@@ -30,29 +30,30 @@ title!("Sine and cosine and where they intersect in [0,2π]")
 !!! note "Warning"
     You may need to run the first plot cell twice to see an image.
 """
-function plot(x, y;
-              kwargs...)
-    p = Plot(Config(), Config(), Config() )
-    current_plot[] = p
-    if first_plot[]
-        @info "For the first plot, you may need to re-run your command to see the plot"
-        first_plot[] = false
-    end
+function plot(x, y; kwargs...)
+    p = _new_plot(; kwargs...)
     plot!(p, x, y; kwargs...)
     p
 end
 
 function plot(f::Function, a::Real, b::Real;
               kwargs...)
+    p = _new_plot(;kwargs...)
+    plot!(p, f, a, b; kwargs...)
+    p
+end
+
+function _new_plot(; kwargs...)
     p = Plot(Config(), Config(), Config() )
     current_plot[] = p
     if first_plot[]
         @info "For the first plot, you may need to re-run your command to see the plot"
         first_plot[] = false
     end
-    plot!(p, f, a, b; kwargs...)
     p
 end
+
+
 
 """
     plot!([p::Plot], f; kwargs...)
@@ -63,7 +64,6 @@ Used to add a new tract to an existing plot. Like `Plots.plot!`
 function plot!(p::Plot, x, y;
                width=800, height=600,
                xlims=nothing, ylims=nothing,
-               legend=false,
                kwargs...)
 
     size!(p, width=width, height=height)
@@ -77,15 +77,14 @@ function plot!(p::Plot, x, y;
             idx = l:(r-1)
             l = r + 1
             length(idx) <= 0 && continue
-            d, _ = plotly_config(x[idx], y[idx]; showlegend=legend, kwargs...)
+            d = plotly_config!(p, x[idx], y[idx]; kwargs...)
             push!(p.data,d)
             l = r+1
         end
     else
-        d, l = plotly_config(x,y; kwargs...)
+        d = plotly_config!(p, x,y; kwargs...)
         push!(p.data, d)
     end
-    #merge!(p.layout, l)
     p
 end
 
@@ -128,7 +127,7 @@ function scatter!(p::Plot, x, y;
                   markersize = nothing,
                   markercolor = nothing,
                   kwargs...)
-    cfg, l = plotly_config(x, y; series="markers", type="scatter")
+    cfg = plotly_config!(p, x, y; series="markers", type="scatter")
     !isnothing(markershape) && (cfg.marker.symbol = markershape)
     !isnothing(markersize) && (cfg.marker.size = markersize)
     !isnothing(markercolor) && (cfg.marker.color = markercolor)
@@ -154,7 +153,7 @@ function annotate!(p::Plot, x, y, txt;
                    textposition = nothing,
                    kwargs...)
 
-    cfg, l = plotly_config(x, y; text=txt, mode="text")
+    cfg = plotly_config!(p, x, y; text=txt, mode="text")
     !isnothing(size) && (cfg.textfont.size=size)
     !isnothing(color) && (cfg.textfont.color=color)
     !isnothing(textposition) && (cfg.textposition = textposition)
@@ -203,7 +202,11 @@ ylims!(lims) = ylims!(current_plot[], lims)
 
 
 # clean arguments from Plots wiht line attributes
-function plotly_config(x,y=nothing;
+# This is pretty clunky!
+# modifies layout, but should also push onto .data
+# should handle config too
+# someday
+function plotly_config!(p::Plot, x,y=nothing;
                        linewidth=nothing,
                        series = nothing,
                        type = nothing,
@@ -226,10 +229,10 @@ function plotly_config(x,y=nothing;
         c[k] = v
     end
 
-    l = Config()
-    !isnothing(legend) && (l.showlegend = legend)
+    @show legend
+    !isnothing(legend) && (p.layout.showlegend = legend)
 
-    c, l
+    c
 end
 
 ## -----
@@ -252,5 +255,22 @@ function plotif(f,g, a, b; width=800, height=600,
 	us = xs[xs′[i]:xs′[i+1]]
 	push!(p.data, Config(x=us, y=f.(us), line=Config(color=cols[i])))
 	end
+    p
+end
+
+## -----
+## Special case for plotting SymbolicEquations
+function plot(ex::SimpleExpressions.SymbolicEquation, a::Real, b::Real; kwargs...)
+    p = _new_plot(; kwargs...)
+    plot!(p, ex, a, b; kwargs...)
+
+end
+
+function plot!(p::Plot, ex::SimpleExpressions.SymbolicEquation, a::Real, b::Real; kwargs...)
+    lhs, rhs = ex.lhs, ex.rhs
+    fl = SimpleExpressions.issymbolic(lhs) ? lhs : ((x) -> lhs)
+    fr = SimpleExpressions.issymbolic(rhs) ? rhs : ((x) -> rhs)
+    plot!(p, fl, a, b; kwargs...)
+    plot!(p, fr, a, b; kwargs...)
     p
 end
