@@ -116,7 +116,7 @@ end
 "`signchart(f, a, b)` identifies zeros of `f` (or discontinuities which jump over `0` and classifies sign change at each"
 function sign_chart(f, a, b; atol=1e-6)
     pm(x) = x < 0 ? "-" : x > 0 ? "+" : "0"
-    summarize(f,cp,d) = (DNE_0_∞=cp, sign_change=pm(f(cp-d)) * " → " * pm(f(cp+d)))
+    summarize(f,cp,d) = (var"DNE_0_∞"=cp, sign_change=pm(f(cp-d)) * " → " * pm(f(cp+d)))
     # check endpoint
     if min(abs(f(a)), abs(f(b))) <= max(max(a,b)*eps(), atol)
         return "Sorry, the endpoints must not be zeros for the function"
