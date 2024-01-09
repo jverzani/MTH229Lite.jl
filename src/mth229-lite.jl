@@ -13,6 +13,11 @@ struct Interval{T}
     b::T
 end
 a..b = Interval(promote(a,b)...)
+function Base.iterate(i::Interval, state=nothing)
+    isnothing(state) && return (i.a, 1)
+    state == 1 && return (i.b, 2)
+    nothing
+end
 ## hacky way to make solve(ex, a..b) dispatch to find_zeros(ex, (a,b))
 Roots.CommonSolve.solve(ex::SimpleExpressions.SymbolicEquation, x₀::Interval) =
     find_zeros(ex, (x₀.a, x₀.b))
