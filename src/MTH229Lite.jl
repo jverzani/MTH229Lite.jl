@@ -38,7 +38,7 @@ using ForwardDiff
 @info "See `?MTH229Lite` for a few more details."
 export e, .., tangent, secant, fisheye, rangeclamp
 export lim, bisection, newton, sign_chart, riemann
-export plot, plot!, scatter, scatter!, annotate, annotate!, title!, size!, xlims!, ylims!
+export plot, plot!, scatter, scatter!, annotate, annotate!, title!, size!, xlims!, ylims!, legend!
 export unzip, plotif
 
 include("mth229-lite.jl")

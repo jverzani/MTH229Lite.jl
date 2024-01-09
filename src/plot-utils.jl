@@ -1,3 +1,9 @@
+"""
+    unzip(v, [vs...])
+    unzip(f::Function, a, b)
+
+Take container of points, return vector of corrodinated. Reverse of `zip`. Function version applies `f` to a range of points over `(a,b)` and then calls `unzip`.
+"""
 unzip(vs) = Tuple([vs[j][i] for j in eachindex(vs)] for i in eachindex(vs[1]))
 #unzip(v,vs...) = unzip([v, vs...])
 unzip(r::Function, a, b, n) = unzip(r.(range(a, stop=b, length=n)))

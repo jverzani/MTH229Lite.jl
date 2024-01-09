@@ -1,9 +1,30 @@
 ## --- plotting
 
-## create a Plots.plot like interface for PlotlyLight.Plot
+## create a simplish Plots.plot like interface for PlotlyLight.Plot
 
-const current_plot = Ref{Plot}()
-const first_plot = Ref{Bool}(true)
+
+const current_plot = Ref{Plot}() # store current plot
+const first_plot = Ref{Bool}(true) # for first plot warning
+
+# make a new plot by calling `PlotlyLight.Plot`
+function _new_plot(;
+                   width=800, height=600,
+                   xlims=nothing, ylims=nothing,
+                   kwargs...)
+    p = Plot(Config(), Config(), Config() )
+    current_plot[] = p
+
+    if first_plot[]
+        @info "For the first plot, you may need to re-run your command to see the plot"
+        first_plot[] = false
+    end
+
+    size!(p, width=width, height=height)
+    xlims!(p, xlims)
+    ylims!(p, ylims)
+
+    p
+end
 
 """
     plot(x, y; [linecolor], [linewidth], [legend], kwargs...)
@@ -19,9 +40,9 @@ Returns a `Plot` instance from [PlotlyLight](https://github.com/JuliaComputing/P
 
 Other keyword arguments include `width` and `height`, `xlims` and `ylims`, `legend`.
 
-Provides an interface like `Plots.plot` for plotting a function `f` using `PlotlyLight`. This just scratches the surface, but `PlotlyLight` allows full access to the underlying `JavaScript` [library](https://plotly.com/javascript/).
+Provides an interface like `Plots.plot` for plotting a function `f` using `PlotlyLight`. This just scratches the surface, but `PlotlyLight` allows full access to the underlying `JavaScript` [library](https://plotly.com/javascript/) library.
 
-The provided "Plots" like functions are [`plot`](@ref), [`plot!`](@ref), [`scatter!`](@ref), `scatter`, [`annotate!`](@ref),  [`title!`](@ref), [`xlims!`](@ref) and [`ylims!`](@ref).
+The provided "`Plots`-like" functions are [`plot`](@ref), [`plot!`](@ref), [`scatter!`](@ref), `scatter`, [`annotate!`](@ref),  [`title!`](@ref), [`xlims!`](@ref) and [`ylims!`](@ref).
 
 # Example
 
@@ -50,31 +71,10 @@ function plot(f::Function, a::Real, b::Real;
     p
 end
 
-# make a new plot
-function _new_plot(;
-                   width=800, height=600,
-                   xlims=nothing, ylims=nothing,
-                   kwargs...)
-    p = Plot(Config(), Config(), Config() )
-
-    size!(p, width=width, height=height)
-    xlims!(p, xlims)
-    ylims!(p, ylims)
-
-
-    current_plot[] = p
-    if first_plot[]
-        @info "For the first plot, you may need to re-run your command to see the plot"
-        first_plot[] = false
-    end
-    p
-end
-
-
 
 """
-    plot!([p::Plot], f; kwargs...)
     plot!([p::Plot], x, y; kwargs...)
+    plot!([p::Plot], f; kwargs...)
 
 Used to add a new tract to an existing plot. Like `Plots.plot!`
 """
@@ -84,7 +84,7 @@ function plot!(p::Plot, x, y;
                legend=nothing,
                kwargs...)
 
-
+    # fussiness to handle NaNs in `y` values
     nans = findall(isnan, y)
     if !isempty(nans)
         l = 1
@@ -107,13 +107,14 @@ function plot!(p::Plot, x, y;
         push!(p.data, c)
     end
 
-    # layout
+    # layout adjustments
     legend!(p, legend)
+
     p
 end
 
 function plot!(p::Plot, f::Function, a, b; kwargs...)
-    x,y = unzip(f, a, b)
+    x, y = unzip(f, a, b)
     plot!(p, x, y; kwargs...)
 end
 
@@ -124,6 +125,7 @@ function plot!(p::Plot, f::Function; kwargs...)
         a,b = extrema(d.x)
         m = min(a, m); M = max(b,M)
     end
+    m < M || throw(ArgumentError("Can't identify interval to plot over"))
     plot!(p, f, m, M; kwargs...)
 end
 
@@ -160,6 +162,7 @@ function scatter!(p::Plot, x, y;
 end
 scatter!(x, y; kwargs...) = scatter!(current_plot[], x, y; kwargs...)
 
+"`scatter(x, y; kwargs...)` see [`scatter!`](@ref)"
 function scatter(x, y; kwargs...)
     p = _new_plot(; kwargs...)
     scatter!(p, x, y; kwargs...)
@@ -179,6 +182,8 @@ Add annotations to plot.
 * pointsize: text size
 * halign: one of "top", "bottom"
 * valign: one of "left", "right"
+
+The `x`, `y`, `txt` values can be specified as 3 iterables or tuple of tuples.
 """
 function annotate!(p::Plot, x, y, txt;
                    color= nothing,
@@ -217,8 +222,11 @@ function title!(p::Plot, txt)
 end
 title!(txt) = title!(current_plot[], txt)
 
+"`legend!([p::Plot], legend::Bool)` hide/show legend"
 legend!(p::Plot, legend=nothing) = !isnothing(legend) && (p.layout.showlegend = legend)
+legend!(val::Bool) = legend!(current_plot[], val)
 
+"`size!([p::Plot]; [width], [height])` specify size of plot figure"
 function size!(p::Plot; width=nothing, height=nothing)
     !isnothing(width) && (p.layout.width=width)
     !isnothing(height) && (p.layout.height=height)
@@ -274,6 +282,9 @@ function plot(ex::SimpleExpressions.SymbolicEquation, a::Real, b::Real; kwargs..
     plot!(p, ex, a, b; kwargs...)
 
 end
+
+plot(f::SimpleExpressions.SymbolicEquation, I::Interval; kwargs...) = plot(f, I.a, I.b; kwargs...)
+
 
 function plot!(p::Plot, ex::SimpleExpressions.SymbolicEquation, a::Real, b::Real; kwargs...)
     lhs, rhs = ex.lhs, ex.rhs
