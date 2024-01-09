@@ -284,6 +284,14 @@ function plot(ex::SimpleExpressions.SymbolicEquation, a::Real, b::Real; kwargs..
 
 end
 
+# #https://www.chebfun.org/examples/roots/Tiger.html
+# u = 2*exp(x/2) * (sin(5*x) + sin(101*x))
+# v = u - round(u)
+# p = plot(u ~ 0, -2..1; linecolor="orange")
+# xs = solve(v ~ 0, -2..1)
+# filter!(x -> abs(v(x)) <= 1/8, xs) # no jumps
+# @show length(xs)
+# scatter!(xs, u.(xs); markercolor="black")
 plot(f::SimpleExpressions.SymbolicEquation, I::Interval; kwargs...) = plot(f, I.a, I.b; kwargs...)
 
 
