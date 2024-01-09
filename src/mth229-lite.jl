@@ -8,12 +8,28 @@ Base.adjoint(f::SimpleExpressions.AbstractSymbolic) = SimpleExpressions.D(f)
 # solve just seem natural here
 Roots.CommonSolve.solve(ex::SimpleExpressions.SymbolicEquation, x₀, args...; kwargs...) = find_zero(ex, x₀, args...; kwargs...)
 
+struct Interval{T}
+    a::T
+    b::T
+end
+a..b = Interval(promote(a,b)...)
+## hacky way to make solve(ex, a..b) dispatch to find_zeros(ex, (a,b))
+Roots.CommonSolve.solve(ex::SimpleExpressions.SymbolicEquation, x₀::Interval) =
+    find_zeros(ex, (x₀.a, x₀.b))
+
+
 # simple functions
 "`tangent(f,c)` returns a function computing the tangent line of `f` at `c`"
 tangent(f, c) = x -> f(c) + f'(c)*(x-c)
+tangent(u::SimpleExpressions.AbstractSymbolic,c) = (@symbolic 𝑥; u(c) + u'(c)*(𝑥-c))
 
 "`secant(f,a,b)` returns a function computing the secant line of `f` between `a` and `b`"
 secant(f, a, b) = x -> f(a) + (f(b)-f(a)) / (b-a) * (x - a)
+function secant(f::SimpleExpressions.AbstractSymbolic, a, b)
+    @symbolic 𝑥
+    f(a) + (f(b)-f(a)) / (b-a) * (𝑥 - a)
+end
+
 
 "`fisheye(f)` changes domain of function `f` to `(-pi/2, pi/2)`"
 fisheye(f)=x->atan(f(tan(x)))
