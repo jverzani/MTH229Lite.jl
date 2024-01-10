@@ -5,28 +5,71 @@ const e = exp(1)
 Base.adjoint(f::Function) = x -> ForwardDiff.derivative(f, float(x))
 Base.adjoint(f::SimpleExpressions.AbstractSymbolic) = SimpleExpressions.D(f)
 
-# solve just seems natural here
-"`solve(ex::SymbolicEquation, x₀, args...; kwargs...)` calls `find_zero` to solve equation`."
-Roots.CommonSolve.solve(ex::SimpleExpressions.SymbolicEquation, x₀, args...; kwargs...) = find_zero(ex, x₀, args...; kwargs...)
+"""
+    Interval(a,b)
 
+A means to specify an interval in the  form `a..b`
+
+There are methods for
+* `plot(eq, I)` (two plots)
+* `solve(eq, I)` (dispatch to find_zeros)
+* `sign_chart`, `riemann`, `quadgk`
+
+Rhere are parsing gotchas
+* `-1..2` is okay
+* `-2..-1` is not, try `-2..(-1)`
+* `-1..x^2` will parse as `Interval(-1,x^2)`, also `-1..x+2` becomes `Interval(-1, x_1)`, as `..` has low precedence.
+"""
 struct Interval{T}
     a::T
     b::T
 end
-a..b = Interval(promote(a,b)...)
+a..b = Interval(promote(a,b)...) # sort?
 function Base.iterate(i::Interval, state=nothing)
     isnothing(state) && return (i.a, 1)
     state == 1 && return (i.b, 2)
     nothing
 end
-## hacky way to make solve(ex, a..b) dispatch to find_zeros(ex, (a,b))
-"`solve(ex::SymbolicEquation, I::Interval; kwargs...)` calls `find_zeros` to solve equation`. An interval is specified with `..`."
-Roots.CommonSolve.solve(ex::SimpleExpressions.SymbolicEquation, I::Interval; kwargs...) =
-    find_zeros(ex, (I.a, I.b); kwargs...)
+
+# solve just seems kind of natural here
+# solve(eqn, I::Interval) -> find_zeros
+# solve(eqn, x₀) find_zero
+""""
+    solve(ex::SymbolicEquation, x₀, args...; kwargs...)
+    solve(ex::SymbolicEquation, x₀::Interval; kwargs...)`
+
+Numerically solve an equation specified withg a symbol.
+
+The `find_zero` or `find_zeros` function is used, the latter when `x₀` is of type `Interval` (specified with the `..` infix operator.
+
+# Example
+```julia
+julia> solve(e^x ~ x^4, 10)       # solution near 10
+8.6131694564414
+
+julia> solve(e^x ~ x^4, -10, 10)  # some solution in bracketing interval
+-0.8155534188089607
+
+julia> solve(e^x ~ x^4, -10..10)  # all solutions within [-10, 10]
+3-element Vector{Float64}:
+ -0.8155534188089606
+  1.4296118247255554
+  8.6131694564414
+```
+
+"""
+function Roots.CommonSolve.solve(ex::SimpleExpressions.SymbolicEquation, x₀, args...; kwargs...)
+    find_zero(ex, x₀, args...; kwargs...)
+end
+
+function Roots.CommonSolve.solve(ex::SimpleExpressions.SymbolicEquation, I::Interval; kwargs...)
+    find_zeros(ex, I; kwargs...)
+end
 
 ## ----
 
-# simple functions
+# simple functions of MTH229
+
 "`tangent(f,c)` returns a function computing the tangent line of `f` at `c`"
 tangent(f, c) = x -> f(c) + f'(c)*(x-c)
 tangent(u::SimpleExpressions.AbstractSymbolic,c) = (@symbolic 𝑥; u(c) + u'(c)*(𝑥-c))
@@ -42,7 +85,7 @@ end
 "`fisheye(f)` changes domain of function `f` to `(-pi/2, pi/2)`"
 fisheye(f)=x->atan(f(tan(x)))
 
-"`rangeclam(f, [hi], [lo]; replacement)` returns f function which has the value of `replacement` when `lo <= f(x) <= hi` doesn't hold."
+"`rangeclamp(f, [hi], [lo]; replacement)` returns f function which has the value of `replacement` when `lo <= f(x) <= hi` doesn't hold."
 rangeclamp(f, hi=20, lo=-hi; replacement=NaN) = x -> lo < f(x) < hi ? f(x) : replacement
 
 "`newton(f, x)` easy to use Newton's method; derivative computed using `f'`"
@@ -159,6 +202,7 @@ function sign_chart(f, a, b; atol=1e-6)
     end
     summarize.([f], zs, d)
 end
+sign_chart(f, ab::Interval; kwargs...) = sign_chart(f, extrema(ab)...; kwargs...)
 
 """
     riemann(f, a, b, n; method="right")
@@ -166,6 +210,7 @@ end
 Simple Riemann sum, Method is one of "right", "left", "trapezoid", or "simpsons".
 """
 function riemann(f::Function, a::Real, b::Real, n::Int; method="right")
+    b < a && return -riemann(f, b, a, n; method="right")
     if method == "right"
         meth = (f,l,r) -> f(r) * (r-l)
     elseif method == "left"
@@ -180,3 +225,10 @@ function riemann(f::Function, a::Real, b::Real, n::Int; method="right")
     lrₛ = zip(Iterators.take(xs, n), Iterators.drop(xs, 1))
     sum(meth(f, l, r) for (l,r) in lrₛ)
 end
+
+# integration methods for type Interval
+riemann(f::Function, ab::Interval, n::Int; method="right") =
+    riemann(f, extrema(ab)..., n; method)
+
+QuadGK.quadgk(f::Function, ab::Interval; kwargs...) =
+    quadgk(f, extrema(ab)...; kwargs...)
