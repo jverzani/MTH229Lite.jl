@@ -72,6 +72,8 @@ function plot(f::Function, a::Real, b::Real;
     p
 end
 
+plot(f::Function, I::Interval; kwargs...) = plot(f, I...; kwargs...)
+
 
 """
     plot!([p::Plot], x, y; kwargs...)
@@ -80,12 +82,12 @@ end
 Used to add a new tract to an existing plot. Like `Plots.plot!`
 """
 function plot!(p::Plot, x, y;
-               linecolor=nothing,
+               linecolor = nothing,
                linewidth = nothing,
                legend=nothing,
                kwargs...)
-
     # fussiness to handle NaNs in `y` values
+    y[isinf.(y)] .= NaN
     nans = findall(isnan, y)
     if !isempty(nans)
         l = 1
@@ -93,15 +95,23 @@ function plot!(p::Plot, x, y;
             idx = l:(r-1)
             l = r + 1
             length(idx) <= 0 && continue
-            c = Config(x = x[idx], y=y[idx])
+            c = Config(x = x[idx], y=y[idx], mode="lines")
             !isnothing(linewidth) && (c.line.width=linewidth)
             !isnothing(linecolor) && (c.line.color=linecolor)
 
             push!(p.data,c)
             l = r+1
         end
+        r = length(y)
+        idx = l:(r-1)
+        if length(idx) > 0
+            c = Config(x = x[idx], y=y[idx], mode="lines")
+            !isnothing(linewidth) && (c.line.width=linewidth)
+            !isnothing(linecolor) && (c.line.color=linecolor)
+            push!(p.data,c)
+        end
     else
-        c = Config(; x, y)
+        c = Config(; x, y, mode="lines")
         !isnothing(linewidth) && (c.line.width=linewidth)
         !isnothing(linecolor) && (c.line.color=linecolor)
 
@@ -119,6 +129,8 @@ function plot!(p::Plot, f::Function, a, b; kwargs...)
     plot!(p, x, y; kwargs...)
 end
 
+plot!(p::Plot, f::Function, I::Interval; kwargs...) = plot!(f, I...; kwargs...)
+
 function plot!(p::Plot, f::Function; kwargs...)
     m,M = (Inf, -Inf)
     for d ∈ p.data
@@ -131,7 +143,7 @@ function plot!(p::Plot, f::Function; kwargs...)
 end
 
 plot!(x, y; kwargs...) =  plot!(current_plot[], x, y; kwargs...)
-plot!(f::Function; kwargs...) =  plot!(current_plot[], f; kwargs...)
+plot!(f::Function, args...; kwargs...) =  plot!(current_plot[], f, args...; kwargs...)
 
 """
     scatter(x, y; [markershape], [markercolor], [markersize], kwargs...)
