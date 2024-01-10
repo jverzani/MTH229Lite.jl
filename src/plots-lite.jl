@@ -87,8 +87,11 @@ function plot!(p::Plot, x, y;
                legend=nothing,
                kwargs...)
     # fussiness to handle NaNs in `y` values
+    x, y = float(x), float(y)
+
     y[isinf.(y)] .= NaN
     nans = findall(isnan, y)
+
     if !isempty(nans)
         l = 1
         for r ∈ nans
