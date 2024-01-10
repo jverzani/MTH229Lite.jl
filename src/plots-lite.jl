@@ -72,6 +72,8 @@ function plot(f::Function, a::Real, b::Real;
     p
 end
 
+plot(f::Function, I::Interval; kwargs...) = plot(f, I...; kwargs...)
+
 
 """
     plot!([p::Plot], x, y; kwargs...)
@@ -119,6 +121,8 @@ function plot!(p::Plot, f::Function, a, b; kwargs...)
     plot!(p, x, y; kwargs...)
 end
 
+plot!(p::Plot, f::Function, I::Interval; kwargs...) = plot!(f, I...; kwargs...)
+
 function plot!(p::Plot, f::Function; kwargs...)
     m,M = (Inf, -Inf)
     for d ∈ p.data
@@ -131,7 +135,7 @@ function plot!(p::Plot, f::Function; kwargs...)
 end
 
 plot!(x, y; kwargs...) =  plot!(current_plot[], x, y; kwargs...)
-plot!(f::Function; kwargs...) =  plot!(current_plot[], f; kwargs...)
+plot!(f::Function, args...; kwargs...) =  plot!(current_plot[], f, args...; kwargs...)
 
 """
     scatter(x, y; [markershape], [markercolor], [markersize], kwargs...)
