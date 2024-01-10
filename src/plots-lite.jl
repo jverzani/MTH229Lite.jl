@@ -82,12 +82,12 @@ plot(f::Function, I::Interval; kwargs...) = plot(f, I...; kwargs...)
 Used to add a new tract to an existing plot. Like `Plots.plot!`
 """
 function plot!(p::Plot, x, y;
-               linecolor=nothing,
+               linecolor = nothing,
                linewidth = nothing,
                legend=nothing,
                kwargs...)
-
     # fussiness to handle NaNs in `y` values
+    y[isinf.(y)] .= NaN
     nans = findall(isnan, y)
     if !isempty(nans)
         l = 1
@@ -95,15 +95,23 @@ function plot!(p::Plot, x, y;
             idx = l:(r-1)
             l = r + 1
             length(idx) <= 0 && continue
-            c = Config(x = x[idx], y=y[idx])
+            c = Config(x = x[idx], y=y[idx], mode="lines")
             !isnothing(linewidth) && (c.line.width=linewidth)
             !isnothing(linecolor) && (c.line.color=linecolor)
 
             push!(p.data,c)
             l = r+1
         end
+        r = length(y)
+        idx = l:(r-1)
+        if length(idx) > 0
+            c = Config(x = x[idx], y=y[idx], mode="lines")
+            !isnothing(linewidth) && (c.line.width=linewidth)
+            !isnothing(linecolor) && (c.line.color=linecolor)
+            push!(p.data,c)
+        end
     else
-        c = Config(; x, y)
+        c = Config(; x, y, mode="lines")
         !isnothing(linewidth) && (c.line.width=linewidth)
         !isnothing(linecolor) && (c.line.color=linecolor)
 
