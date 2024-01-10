@@ -278,28 +278,49 @@ end
 
 ## -----
 ## Special case for plotting SymbolicEquations
+"""
+    plot(eqn::SymbolicEquation, a::Real, b::Real; kwargs...)
+    plot(eqn::SymbolicEquation, ab::Interval; kwargs...)
+
+Plot equation by plotting both left-hand side and right-hand side over the specified interval. Argument `linecolor` and `linewidth` may specify two distinct values.
+
+# Example
+```julia
+# cf. https://www.chebfun.org/examples/roots/Tiger.html
+@symbolic x
+u = 2*exp(x/2) * (sin(5*x) + sin(101*x))
+v = u - round(u)
+ab = -2..1
+p = plot(u ~ 0, ab; linecolor=("orange","blue"), linewidth=(nothing, 2), legend=false)
+xs = solve(v ~ 0, ab)
+filter!(x -> abs(v(x)) <= 1/8, xs) # no jumps, 345 left
+scatter!(xs, u.(xs); markercolor="black")
+```
+"""
 function plot(ex::SimpleExpressions.SymbolicEquation, a::Real, b::Real; kwargs...)
     p = _new_plot(; kwargs...)
     plot!(p, ex, a, b; kwargs...)
 
 end
 
-# #https://www.chebfun.org/examples/roots/Tiger.html
-# u = 2*exp(x/2) * (sin(5*x) + sin(101*x))
-# v = u - round(u)
-# p = plot(u ~ 0, -2..1; linecolor="orange")
-# xs = solve(v ~ 0, -2..1)
-# filter!(x -> abs(v(x)) <= 1/8, xs) # no jumps
-# @show length(xs)
-# scatter!(xs, u.(xs); markercolor="black")
 plot(f::SimpleExpressions.SymbolicEquation, I::Interval; kwargs...) = plot(f, I.a, I.b; kwargs...)
 
 
-function plot!(p::Plot, ex::SimpleExpressions.SymbolicEquation, a::Real, b::Real; kwargs...)
+function plot!(p::Plot, ex::SimpleExpressions.SymbolicEquation, a::Real, b::Real; linecolor=nothing, linewidth=nothing, kwargs...)
     lhs, rhs = ex.lhs, ex.rhs
     fl = SimpleExpressions.issymbolic(lhs) ? lhs : ((x) -> lhs)
     fr = SimpleExpressions.issymbolic(rhs) ? rhs : ((x) -> rhs)
-    plot!(p, fl, a, b; kwargs...)
-    plot!(p, fr, a, b; kwargs...)
+
+    lcₗ, lcᵣ = (isa(linecolor, Vector) || isa(linecolor, Tuple)) ?
+        (first(linecolor), last(linecolor)) :
+         (linecolor, linecolor)
+
+    lwₗ, lwᵣ = isnothing(linewidth) ?
+        (nothing, nothing) :
+        (first(linewidth), last(linewidth))
+
+
+    plot!(p, fl, a, b; linecolor=lcₗ, linewidth=lwₗ, kwargs...)
+    plot!(p, fr, a, b; linecolor=lcᵣ, linewidth=lwᵣ, kwargs...)
     p
 end

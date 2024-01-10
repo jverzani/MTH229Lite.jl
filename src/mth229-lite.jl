@@ -42,6 +42,21 @@ Numerically solve an equation specified withg a symbol.
 
 The `find_zero` or `find_zeros` function is used, the latter when `x₀` is of type `Interval` (specified with the `..` infix operator.
 
+# Example
+```julia
+julia> solve(e^x ~ x^4, 10)       # solution near 10
+8.6131694564414
+
+julia> solve(e^x ~ x^4, -10, 10)  # some solution in bracketing interval
+-0.8155534188089607
+
+julia> solve(e^x ~ x^4, -10..10)  # all solutions within [-10, 10]
+3-element Vector{Float64}:
+ -0.8155534188089606
+  1.4296118247255554
+  8.6131694564414
+```
+
 """
 function Roots.CommonSolve.solve(ex::SimpleExpressions.SymbolicEquation, x₀, args...; kwargs...)
     find_zero(ex, x₀, args...; kwargs...)
