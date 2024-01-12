@@ -30,7 +30,7 @@ function Base.iterate(i::Interval, state=nothing)
     state == 1 && return (i.b, 2)
     nothing
 end
-
+Base.length(::Interval) = 2
 # solve just seems kind of natural here
 # solve(eqn, I::Interval) -> find_zeros
 # solve(eqn, x₀) find_zero

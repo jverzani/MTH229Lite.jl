@@ -1,6 +1,6 @@
 ## --- plotting
 
-## create a simplish Plots.plot like interface for PlotlyLight.Plot
+## create a simplish 2D Plots.plot like interface for PlotlyLight.Plot
 
 
 const current_plot = Ref{Plot}() # store current plot
@@ -10,8 +10,9 @@ const first_plot = Ref{Bool}(true) # for first plot warning
 function _new_plot(;
                    width=800, height=600,
                    xlims=nothing, ylims=nothing,
+                   legend = nothing,
                    kwargs...)
-    p = Plot(Config(), Config(), Config() )
+    p = Plot(Config[], Config(), Config() ) # data, layout, config
     current_plot[] = p
 
     if first_plot[]
@@ -22,6 +23,10 @@ function _new_plot(;
     size!(p, width=width, height=height)
     xlims!(p, xlims)
     ylims!(p, ylims)
+
+    # layout
+    legend!(p, legend)
+
 
     p
 end
@@ -37,6 +42,7 @@ Returns a `Plot` instance from [PlotlyLight](https://github.com/JuliaComputing/P
 * x,y points to plot. NaN values in `y` break the line
 * linecolor: color of line
 * linewidth: width of line
+* label
 
 Other keyword arguments include `width` and `height`, `xlims` and `ylims`, `legend`.
 
@@ -84,7 +90,7 @@ Used to add a new tract to an existing plot. Like `Plots.plot!`
 function plot!(p::Plot, x, y;
                linecolor = nothing,
                linewidth = nothing,
-               legend=nothing,
+               label = nothing,
                kwargs...)
     # fussiness to handle NaNs in `y` values
     x, y = float(x), float(y)
@@ -94,37 +100,32 @@ function plot!(p::Plot, x, y;
 
     if !isempty(nans)
         l = 1
+        push!(nans, length(y)+1)
         for r ∈ nans
             idx = l:(r-1)
             l = r + 1
             length(idx) <= 0 && continue
-            c = Config(x = x[idx], y=y[idx], mode="lines")
-            !isnothing(linewidth) && (c.line.width=linewidth)
-            !isnothing(linecolor) && (c.line.color=linecolor)
-
-            push!(p.data,c)
-            l = r+1
-        end
-        r = length(y)
-        idx = l:(r-1)
-        if length(idx) > 0
-            c = Config(x = x[idx], y=y[idx], mode="lines")
-            !isnothing(linewidth) && (c.line.width=linewidth)
-            !isnothing(linecolor) && (c.line.color=linecolor)
-            push!(p.data,c)
+            _push_line_trace!(p, x[idx], y[idx];
+                              linewidth, linecolor, label)
         end
     else
-        c = Config(; x, y, mode="lines")
-        !isnothing(linewidth) && (c.line.width=linewidth)
-        !isnothing(linecolor) && (c.line.color=linecolor)
-
-        push!(p.data, c)
+        _push_line_trace!(p, x, y;
+                          linewidth, linecolor, label)
     end
 
-    # layout adjustments
-    legend!(p, legend)
-
     p
+end
+
+function _push_line_trace!(p, x, y;
+                           mode="lines",
+                           linewidth = nothing,
+                           linecolor = nothing,
+                           label = nothing)
+    c = Config(; x, y, mode="lines")
+    !isnothing(linewidth) && (c.line.width=linewidth)
+    !isnothing(linecolor) && (c.line.color=linecolor)
+    !isnothing(label) && (c.name = label)
+    push!(p.data, c)
 end
 
 function plot!(p::Plot, f::Function, a, b; kwargs...)
@@ -164,15 +165,17 @@ function scatter!(p::Plot, x, y;
                   legend=nothing,
                   kwargs...)
 
-    cfg = Config(;x, y, mode="markers", type="scatter")
+    # skip NaN or Inf
+    keep_x = findall(isfinite, x)
+    keep_y = findall(isfinite, y)
+    idx = intersect(keep_x, keep_y)
+
+    cfg = Config(;x=x[idx], y=y[idx], mode="markers", type="scatter")
     !isnothing(markershape) && (cfg.marker.symbol = markershape)
     !isnothing(markersize)  && (cfg.marker.size = markersize)
     !isnothing(markercolor) && (cfg.marker.color = markercolor)
 
     push!(p.data, cfg)
-
-    # layout
-    legend!(p, legend)
 
     p
 end
@@ -211,8 +214,10 @@ function annotate!(p::Plot, x, y, txt;
 
     cfg = Config(; x, y, text=txt, mode="text", type="scatter")
 
-    textposition = something(halign,"") * something(valign, "")
+    textposition =
+        string(something(halign,"")) * string(something(valign, ""))
     isempty(textposition) && (textposition = nothing)
+
     !isnothing(textposition) && (cfg.textposition = textposition)
 
     !isnothing(color) && (cfg.textfont.color=color)
@@ -290,6 +295,41 @@ function plotif(f,g, a, b; width=800, height=600,
 	end
     p
 end
+
+"""
+    grid_layout(ps::Array{<:Plot})
+
+Layout an array of plots into a grid. Vectors become rows of plots.
+
+Use `Plot()` to create an empty plot for a given cell.
+"""
+function grid_layout(ps::Array{<:Plot};
+                     pattern="independent", # or "coupled"
+                     legend = false,
+                     )
+    mn = size(ps)
+    m, n = length(mn) == 1 ? (1, only(mn)) : mn
+
+    layout = Config()
+    layout.grid.rows = m
+    layout.grid.columns = n
+    !isnothing(pattern) && (layout.grid.pattern = pattern)
+    !isnothing(legend) && (layout.showlegend = legend)
+
+    data = Config[]
+    for (i,p) ∈ enumerate(ps)
+        xi,yi = "x$i", "y$i"
+        for d ∈ p.data
+            isempty(d) && continue
+            d.xaxis = xi
+            d.yaxis = yi
+            push!(data, d)
+        end
+    end
+
+    Plot(data, layout)
+end
+
 
 ## -----
 ## Special case for plotting SymbolicEquations
