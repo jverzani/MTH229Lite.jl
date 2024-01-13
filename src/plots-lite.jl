@@ -100,7 +100,6 @@ end
 
 plot(f::Function, I::Interval; kwargs...) = plot(f, I...; kwargs...)
 
-
 """
     plot!([p::Plot], x, y; kwargs...)
     plot!([p::Plot], f; kwargs...)
