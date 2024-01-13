@@ -12,7 +12,9 @@ function _new_plot(;
                    xlims=nothing, ylims=nothing,
                    legend = nothing,
                    kwargs...)
-    p = Plot(Config[], Config(), Config() ) # data, layout, config
+    p = Plot(Config[], # data
+             Config(), # layout
+             Config(responsive=true, scrollZoom=true) ) # config
     current_plot[] = p
 
     if first_plot[]
@@ -31,8 +33,24 @@ function _new_plot(;
     p
 end
 
+function _merge!(c::Config; kwargs...)
+    for kv ∈ kwargs
+        k,v = kv
+        v = isa(v,Pair) ? last(v) : v
+        isnothing(v) && continue
+        c[k] = v
+    end
+end
+
+function _join!(xs, delim="")
+    xs′ = filter(!isnothing, xs)
+    isempty(xs′) && return nothing
+    join(string.(xs′), delim)
+end
+
+
 """
-    plot(x, y; [linecolor], [linewidth], [legend], kwargs...)
+    plot(x, y, [z]; [linecolor], [linewidth], [legend], kwargs...)
     plot(f::Function, a, b; kwargs...)
 
 Create a line plot.
@@ -65,9 +83,9 @@ ylims!((-3/2, 3/2))
 !!! note "Warning"
     You may need to run the first plot cell twice to see an image.
 """
-function plot(x, y; kwargs...)
+function plot(x, ys...; kwargs...)
     p = _new_plot(; kwargs...)
-    plot!(p, x, y; kwargs...)
+    plot!(p, x, ys...; kwargs...)
     p
 end
 
@@ -88,8 +106,6 @@ plot(f::Function, I::Interval; kwargs...) = plot(f, I...; kwargs...)
 Used to add a new tract to an existing plot. Like `Plots.plot!`
 """
 function plot!(p::Plot, x, y;
-               linecolor = nothing,
-               linewidth = nothing,
                label = nothing,
                kwargs...)
     # fussiness to handle NaNs in `y` values
@@ -105,12 +121,10 @@ function plot!(p::Plot, x, y;
             idx = l:(r-1)
             l = r + 1
             length(idx) <= 0 && continue
-            _push_line_trace!(p, x[idx], y[idx];
-                              linewidth, linecolor, label)
+            _push_line_trace!(p, x[idx], y[idx]; label, kwargs...)
         end
     else
-        _push_line_trace!(p, x, y;
-                          linewidth, linecolor, label)
+        _push_line_trace!(p, x, y; label, kwargs...)
     end
 
     p
@@ -118,15 +132,25 @@ end
 
 function _push_line_trace!(p, x, y;
                            mode="lines",
-                           linewidth = nothing,
-                           linecolor = nothing,
-                           label = nothing)
-    c = Config(; x, y, mode="lines")
-    !isnothing(linewidth) && (c.line.width=linewidth)
-    !isnothing(linecolor) && (c.line.color=linecolor)
-    !isnothing(label) && (c.name = label)
+                           label = nothing, kwargs...
+                           )
+    c = Config(; x, y, mode=mode)
+    _linestyle!(c.line, kwargs...)
+    _merge!(c; name=label)
     push!(p.data, c)
 end
+
+function plot!(p::Plot, x, y, z;
+               label = nothing,
+               kwargs...)
+    # XXX handle NaNs...
+    c = Config(;x,y,z,type="scatter3d", mode="lines")
+    _linestyle!(c.line, kwargs...)
+    _merge!(c; name=label)
+    push!(p.data, c)
+    p
+end
+
 
 function plot!(p::Plot, f::Function, a, b; kwargs...)
     x, y = unzip(f, a, b)
@@ -158,12 +182,7 @@ Place point on a plot.
 * `markercolor`: color e.g. "red"
 * `markersize`:  size, as an integer
 """
-function scatter!(p::Plot, x, y;
-                  markershape = nothing,
-                  markersize = nothing,
-                  markercolor = nothing,
-                  legend=nothing,
-                  kwargs...)
+function scatter!(p::Plot, x, y; kwargs...)
 
     # skip NaN or Inf
     keep_x = findall(isfinite, x)
@@ -171,20 +190,40 @@ function scatter!(p::Plot, x, y;
     idx = intersect(keep_x, keep_y)
 
     cfg = Config(;x=x[idx], y=y[idx], mode="markers", type="scatter")
-    !isnothing(markershape) && (cfg.marker.symbol = markershape)
-    !isnothing(markersize)  && (cfg.marker.size = markersize)
-    !isnothing(markercolor) && (cfg.marker.color = markercolor)
+    _markerstyle!(cfg.marker; kwargs...)
 
     push!(p.data, cfg)
 
     p
 end
+
+function scatter!(p::Plot, x, y, z;
+                  legend=nothing,
+                  kwargs...)
+
+    # skip NaN or Inf
+    keep_x = findall(isfinite, x)
+    keep_y = findall(isfinite, y)
+    keep_z = findall(isfinite, z)
+    idx = intersect(keep_x, keep_y, keep_z)
+
+    cfg = Config(;x=x[idx], y=y[idx], z=z[idx],
+                 mode="markers", type="scatter3d")
+    _markerstyle!(cfg.marker; kwargs...)
+
+    push!(p.data, cfg)
+
+    p
+end
+
+
 scatter!(x, y; kwargs...) = scatter!(current_plot[], x, y; kwargs...)
 
 "`scatter(x, y; kwargs...)` see [`scatter!`](@ref)"
-function scatter(x, y; kwargs...)
+function scatter(x, ys...; kwargs...)
     p = _new_plot(; kwargs...)
-    scatter!(p, x, y; kwargs...)
+
+    scatter!(p, x, ys...; kwargs...)
     p
 end
 
@@ -214,15 +253,9 @@ function annotate!(p::Plot, x, y, txt;
 
     cfg = Config(; x, y, text=txt, mode="text", type="scatter")
 
-    textposition =
-        string(something(halign,"")) * string(something(valign, ""))
-    isempty(textposition) && (textposition = nothing)
-
-    !isnothing(textposition) && (cfg.textposition = textposition)
-
-    !isnothing(color) && (cfg.textfont.color=color)
-    !isnothing(family) && (cfg.textfont.family = family)
-    !isnothing(pointsize) && (cfg.textfont.size = pointsize)
+    textposition = join((halign, valign), " ")
+    _merge!(cfg; textposition)
+    _textstyle!(cfg.textfont; color, family, pointsize, kwargs...)
 
     push!(p.data, cfg)
     p
@@ -242,6 +275,12 @@ function title!(p::Plot, txt)
     p
 end
 title!(txt) = title!(current_plot[], txt)
+
+xlabel!(p::Plot, txt) = (p.layout.xaxis.title=txt;p)
+xlabel!(txt) = xlabel!(current_plot[], txt)
+
+ylabel!(p::Plot, txt) = (p.layout.yaxis.title=txt;p)
+ylabel!(txt) = ylabel!(current_plot[], txt)
 
 "`legend!([p::Plot], legend::Bool)` hide/show legend"
 legend!(p::Plot, legend=nothing) = !isnothing(legend) && (p.layout.showlegend = legend)
@@ -272,6 +311,102 @@ ylims!(p::Plot, ::Nothing) = p
 ylims!(lims) = ylims!(current_plot[], lims)
 
 
+## ---- configuration
+
+function _linestyle!(line::Config,
+                     linecolor=nothing, # string, symbol, RGB?
+                     linewidth=nothing, # pixels
+                     linestyle=nothing, # solid, dot, dashdot,
+                     kwargs...)
+    _merge!(line; color=linecolor, width=linewidth, dash=linestyle)
+end
+
+
+function _markerstyle!(marker::Config;
+                       markershape = nothing,
+                       markersize = nothing,
+                       markercolor = nothing,
+                       kwargs...)
+    _merge!(marker; symbol=markershape, size=markersize, color=markercolor)
+end
+
+function _textstyle!(textfont::Config;
+                     color=nothing,
+                     family=nothing,
+                     pointsize=nothing,
+                     kwargs...)
+    _merge!(textfont, color=color, family=family, size=pointsize)
+end
+
+
+
+# The camera position and direction is determined by three vectors: up, center, eye.
+#
+# Their coordinates refer to the 3-d domain, i.e., (0, 0, 0) is always the center of the domain, no matter data values.
+#
+# The eye vector determines the position of the camera. The default is $(x=1.25, y=1.25, z=1.25)$.
+#
+# The up vector determines the up direction on the page. The default is $(x=0, y=0, z=1)$, that is, the z-axis points up.
+#
+#  The projection of the center point lies at the center of the view. By default it is $(x=0, y=0, z=0)$. [https://plotly.com/python/3d-camera-controls/]
+#
+function _camera_position!(camera::Config,
+                          center,
+                          up,
+                          eye)
+    _merge!(camera; center)
+    _merge!(camera; up)
+    _merge!(camera; eye)
+end
+
+## -----
+function contour(x, y, f::Function; kwargs...)
+    p = _new_plot(; kwargs...)
+    contour!(p, x,y, f.(x', y); kwargs...)
+end
+
+function contour!(p::Plot, x, y, z;
+                  colorscale = nothing,
+                  contours = nothing,
+                  kwargs...)
+    c = Config(;x,y,z,type="contour")
+    !isnothing(colorscale) && (c.colorscale=colorscale)
+    if !isnothing(contours) # something with a step
+        l,r = extrema(contours); s = step(contours)
+        c.contours.start = l
+        c.controus.size  = s
+        c.contours."end" = r
+    end
+
+    push!(p.data, c)
+    p
+end
+
+function surface(x, y, f::Function; kwargs...)
+    p = _new_plot(; kwargs...)
+    surface!(p, x, y, f.(x', y); kwargs...)
+end
+
+function surface(x, y, z; kwargs...)
+    p = _new_plot(; kwargs...)
+    surface!(p, x, y, z; kwargs...)
+end
+
+
+function surface!(p::Plot, x, y, z;
+                  eye = nothing, # (x=1.35, y=1.35, z=..)
+                  center = nothing,
+                  up = nothing,
+                  kwargs...)
+    c = Config(;x,y,z,type="surface")
+    # configuration options? colors?
+
+    # camera controls
+    _camera_position!(p.layout.scene.camera; center, up, eye)
+
+    push!(p.data, c)
+    p
+end
 
 ## -----
 
