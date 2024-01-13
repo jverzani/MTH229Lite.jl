@@ -4,6 +4,10 @@ const e = exp(1)
 # f'
 Base.adjoint(f::Function) = x -> ForwardDiff.derivative(f, float(x))
 Base.adjoint(f::SimpleExpressions.AbstractSymbolic) = SimpleExpressions.D(f)
+function D(f::Function)
+    𝑥 = SimpleExpressions.Symbolic(:𝑥)
+    SimpleExpressions.D(f(𝑥))
+end
 
 """
     Interval(a,b)

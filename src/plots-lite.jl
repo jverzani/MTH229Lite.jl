@@ -2,7 +2,7 @@
 
 ## create a simplish 2D Plots.plot like interface for PlotlyLight.Plot
 
-
+## utils
 const current_plot = Ref{Plot}() # store current plot
 const first_plot = Ref{Bool}(true) # for first plot warning
 
@@ -48,6 +48,8 @@ function _join!(xs, delim="")
     join(string.(xs′), delim)
 end
 
+
+## ----
 
 """
     plot(x, y, [z]; [linecolor], [linewidth], [legend], kwargs...)
@@ -151,7 +153,6 @@ function plot!(p::Plot, x, y, z;
     p
 end
 
-
 function plot!(p::Plot, f::Function, a, b; kwargs...)
     x, y = unzip(f, a, b)
     plot!(p, x, y; kwargs...)
@@ -174,8 +175,8 @@ plot!(x, y; kwargs...) =  plot!(current_plot[], x, y; kwargs...)
 plot!(f::Function, args...; kwargs...) =  plot!(current_plot[], f, args...; kwargs...)
 
 """
-    scatter(x, y; [markershape], [markercolor], [markersize], kwargs...)
-    scatter!([p::Plot], x, y; kwargs...)
+    scatter(x, y, [z]; [markershape], [markercolor], [markersize], kwargs...)
+    scatter!([p::Plot], x, y, [z]; kwargs...)
 
 Place point on a plot.
 * `markershape`: shape, e.g. "diamond" or "diamond-open"
@@ -216,7 +217,6 @@ function scatter!(p::Plot, x, y, z;
     p
 end
 
-
 scatter!(x, y; kwargs...) = scatter!(current_plot[], x, y; kwargs...)
 
 "`scatter(x, y; kwargs...)` see [`scatter!`](@ref)"
@@ -227,6 +227,57 @@ function scatter(x, ys...; kwargs...)
     p
 end
 
+## ----- 2-3 d plots
+
+function contour(x, y, f::Function; kwargs...)
+    p = _new_plot(; kwargs...)
+    contour!(p, x,y, f.(x', y); kwargs...)
+end
+
+function contour!(p::Plot, x, y, z;
+                  colorscale = nothing,
+                  contours = nothing,
+                  kwargs...)
+    c = Config(;x,y,z,type="contour")
+    !isnothing(colorscale) && (c.colorscale=colorscale)
+    if !isnothing(contours) # something with a step
+        l,r = extrema(contours); s = step(contours)
+        c.contours.start = l
+        c.controus.size  = s
+        c.contours."end" = r
+    end
+
+    push!(p.data, c)
+    p
+end
+
+function surface(x, y, f::Function; kwargs...)
+    p = _new_plot(; kwargs...)
+    surface!(p, x, y, f.(x', y); kwargs...)
+end
+
+function surface(x, y, z; kwargs...)
+    p = _new_plot(; kwargs...)
+    surface!(p, x, y, z; kwargs...)
+end
+
+
+function surface!(p::Plot, x, y, z;
+                  eye = nothing, # (x=1.35, y=1.35, z=..)
+                  center = nothing,
+                  up = nothing,
+                  kwargs...)
+    c = Config(;x,y,z,type="surface")
+    # configuration options? colors?
+
+    # camera controls
+    _camera_position!(p.layout.scene.camera; center, up, eye)
+
+    push!(p.data, c)
+    p
+end
+
+## ----
 
 """
     annotate!([p::Plot], x, y, txt; [color], [family], [pointsize], [halign], [valign])
@@ -338,8 +389,6 @@ function _textstyle!(textfont::Config;
     _merge!(textfont, color=color, family=family, size=pointsize)
 end
 
-
-
 # The camera position and direction is determined by three vectors: up, center, eye.
 #
 # Their coordinates refer to the 3-d domain, i.e., (0, 0, 0) is always the center of the domain, no matter data values.
@@ -350,62 +399,13 @@ end
 #
 #  The projection of the center point lies at the center of the view. By default it is $(x=0, y=0, z=0)$. [https://plotly.com/python/3d-camera-controls/]
 #
-function _camera_position!(camera::Config,
+function _camera_position!(camera::Config;
                           center,
                           up,
                           eye)
     _merge!(camera; center)
     _merge!(camera; up)
     _merge!(camera; eye)
-end
-
-## -----
-function contour(x, y, f::Function; kwargs...)
-    p = _new_plot(; kwargs...)
-    contour!(p, x,y, f.(x', y); kwargs...)
-end
-
-function contour!(p::Plot, x, y, z;
-                  colorscale = nothing,
-                  contours = nothing,
-                  kwargs...)
-    c = Config(;x,y,z,type="contour")
-    !isnothing(colorscale) && (c.colorscale=colorscale)
-    if !isnothing(contours) # something with a step
-        l,r = extrema(contours); s = step(contours)
-        c.contours.start = l
-        c.controus.size  = s
-        c.contours."end" = r
-    end
-
-    push!(p.data, c)
-    p
-end
-
-function surface(x, y, f::Function; kwargs...)
-    p = _new_plot(; kwargs...)
-    surface!(p, x, y, f.(x', y); kwargs...)
-end
-
-function surface(x, y, z; kwargs...)
-    p = _new_plot(; kwargs...)
-    surface!(p, x, y, z; kwargs...)
-end
-
-
-function surface!(p::Plot, x, y, z;
-                  eye = nothing, # (x=1.35, y=1.35, z=..)
-                  center = nothing,
-                  up = nothing,
-                  kwargs...)
-    c = Config(;x,y,z,type="surface")
-    # configuration options? colors?
-
-    # camera controls
-    _camera_position!(p.layout.scene.camera; center, up, eye)
-
-    push!(p.data, c)
-    p
 end
 
 ## -----
