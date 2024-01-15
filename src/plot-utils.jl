@@ -4,7 +4,7 @@
 
 Take container of points, return vector of corrodinated. Reverse of `zip`. Function version applies `f` to a range of points over `(a,b)` and then calls `unzip`.
 """
-unzip(vs) = invert(vs)
+unzip(vs) = invert(vs) # use SplitApplyCombine.invert (copied below)
 #unzip(v,vs...) = unzip([v, vs...])
 unzip(r::Function, a, b, n) = unzip(r.(range(a, stop=b, length=n)))
 # return (xs, f.(xs)) or (f₁(xs), f₂(xs), ...)

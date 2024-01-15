@@ -47,5 +47,5 @@ include("mth229-lite.jl")
 include("plot-utils.jl")
 include("plots-lite.jl")
 include("polynomial.jl")
-
+include("inverse-functions.jl")
 end

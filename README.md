@@ -4,4 +4,11 @@
 
 A lighter-weight version of the `MTH229` package intended for use in resource constrained environments, such as `binder`.
 
-Not registered, so installed via `import Pkg; Pkg.add(url="https://github.com/jverzani/MTH229Lite.jl")`.
+## Installation
+
+Not registered, so installed via
+
+```
+import Pkg
+Pkg.add(url="https://github.com/jverzani/MTH229Lite.jl")
+```

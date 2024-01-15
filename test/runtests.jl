@@ -61,3 +61,28 @@ using Test
 
 
 end
+
+
+@testset "solve" begin
+    @symbolic x p
+
+    eqn = x^2 + 3 ~ 4
+    @test solve(eqn).rhs() ≈ 1
+    @test isa(solve(eqn).lhs(), SimpleExpressions.Symbolic)
+
+    eqn = sin(x) ~ 1//2
+    @test solve(eqn).rhs() ≈ asin(1//2)
+
+    eqn = exp(exp(x)) ~ 10
+    @test solve(eqn).rhs() ≈ log(log(10))
+
+    eqn = log(x) ~ p
+    solve(eqn).rhs(:, 2) ≈ exp(2)
+
+    # fails, can be silent or error
+    eqn = sin(x) ~ cos(x)
+    @test !isa(solve(eqn).lhs(), SimpleExpressions.Symbolic)
+
+    eqn = sin(x) ~ 2
+    @test_throws DomainError solve(eqn).rhs()
+end
