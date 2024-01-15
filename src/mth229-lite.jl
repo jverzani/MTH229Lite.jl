@@ -1,6 +1,7 @@
-
+# e
 const e = exp(1)
 
+# Derivatives
 # f'
 Base.adjoint(f::Function) = x -> ForwardDiff.derivative(f, float(x))
 Base.adjoint(f::SimpleExpressions.AbstractSymbolic) = SimpleExpressions.D(f)

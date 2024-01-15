@@ -14,7 +14,7 @@ function _new_plot(;
                    kwargs...)
     p = Plot(Config[], # data
              Config(), # layout
-             Config(responsive=true, scrollZoom=true) ) # config
+             Config(responsive=true) ) # config
     current_plot[] = p
 
     if first_plot[]
@@ -28,7 +28,6 @@ function _new_plot(;
 
     # layout
     legend!(p, legend)
-
 
     p
 end
@@ -143,14 +142,26 @@ end
 
 function plot!(p::Plot, x, y, z;
                label = nothing,
+               center=nothing, up=nothing, eye=nothing,
                kwargs...)
+
     # XXX handle NaNs...
     c = Config(;x,y,z,type="scatter3d", mode="lines")
-    _linestyle!(c.line, kwargs...)
     _merge!(c; name=label)
+    _camera_position!(p.layout.scene.camera; center, up, eye)
+    _linestyle!(c.line, kwargs...)
     push!(p.data, c)
     p
 end
+
+function plot!(p::Plot, x; type=nothing, mode=nothing, kwargs...)
+    c = Config(;x)
+    _merge!(c, type=type, mode=mode)
+    push!(p.data, c)
+    p
+end
+
+
 
 function plot!(p::Plot, f::Function, a, b; kwargs...)
     x, y = unzip(f, a, b)
@@ -360,6 +371,9 @@ end
 ylims!(p::Plot, ::Nothing) = p
 ylims!(lims) = ylims!(current_plot[], lims)
 
+"`scrollzoom!([p], x::Bool)` turn on/off scrolling to zoom"
+scroll_zoom!(p::Plot,x::Bool) = p.config.scrollZoom = x
+scroll_zoom!(x::Bool) = scroll_zoom!(current_plot[], x)
 
 ## ---- configuration
 
@@ -436,13 +450,45 @@ end
 Layout an array of plots into a grid. Vectors become rows of plots.
 
 Use `Plot()` to create an empty plot for a given cell.
+
+# Example
+
+```
+using DataFrames
+n = 25
+d = DataFrame(x=sin.(rand(n)), y=rand(n).^2, z = rand(n)) # assume all numeric
+nms = names(d)
+m = Matrix{Plot}(undef, length(nms), length(nms))
+
+for i ∈ eachindex(nms)
+    for j ∈ eachindex(nms)
+        if j > i
+            p = Plot()
+        elseif j == i
+            x = d[:,j]
+            p = plot(x, type="histogram")
+            xlabel!(p, nms[j])  # <<- not working in grid! as differe xaxis purposes
+        else
+            x = d[:,i]; y = d[:,j]
+            p = scatter(x, y)
+            xlabel!(p, nms[i]); ylabel!(p, nms[j])
+        end
+        m[i,j] = p
+    end
+end
+grid_layout(m)
+```
 """
 function grid_layout(ps::Array{<:Plot};
                      pattern="independent", # or "coupled"
                      legend = false,
                      )
     mn = size(ps)
-    m, n = length(mn) == 1 ? (1, only(mn)) : mn
+    if length(mn) == 1
+        m, n = (1, only(mn))
+    else
+        m, n = mn
+    end
 
     layout = Config()
     layout.grid.rows = m
@@ -451,7 +497,7 @@ function grid_layout(ps::Array{<:Plot};
     !isnothing(legend) && (layout.showlegend = legend)
 
     data = Config[]
-    for (i,p) ∈ enumerate(ps)
+    for (i,p) ∈ enumerate(permutedims(ps))
         xi,yi = "x$i", "y$i"
         for d ∈ p.data
             isempty(d) && continue
