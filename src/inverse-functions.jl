@@ -1,42 +1,56 @@
 # cf https://github.com/JuliaMath/InverseFunctions.jl/blob/master/src/inverse.jl
 
-import SimpleExpressions: hassymbolic, issymbolic
-import SimpleExpressions: AbstractSymbolic, Symbolic, SymbolicNumber, SymbolicParameter, SymbolicExpression, SymbolicEquation
-
-
 
 """
     solve(ex::SymbolicEquation)
 
-Tries to solve a symbolic equation by applying applicable identity functions.
+Tries to solve a symbolic equation by applying applicable identity functions or using polynomial roots. Pretty limited.
 
-Pretty limited, for example, can't solve `x^2 + x ~ 0`.
+
 
 # Example
 
 ```julia
-_solve = SimpleExpressions.solve
-@symbolic x p
+julia> @symbolic x p
+(x, p)
 
-eqn = exp(x) ~ 1//2
-_solve(eqn)  # x ~ log(1//2)
+julia> eqn = exp(x) ~ 1//2
+exp(x) ~ 1//2
 
-eqn = sin(x) + 2 ~ 3/2
-_solve(eqn)  # x ~ -0.5235987755982989
+julia> solve(eqn)  #
+x ~ log(1//2)
 
-t1,v1,v2 = p[1], p[2], p[3]
-_solve(sin(t1)/v1 ~ sin(x)/v2) # x ~ asin((sin(p[1]) / p[2]) * p[3])
+julia> eqn = sin(x) + 2 ~ 3/2
+sin(x) + 2 ~ 1.5
+
+julia> solve(eqn)
+x ~ -0.5235987755982989
+
+julia> t1,v1,v2 = p[1], p[2], p[3]
+(p[1], p[2], p[3])
+
+julia> solve(sin(t1)/v1 ~ sin(x)/v2)
+x ~ asin((sin(p[1]) / p[2]) * p[3])
 ```
 
 Some expressions hold symbolic numbers, such as the first example. The numeric value of the resulting equation `u` can be found through `u.rhs()`.
+
+Polynomial expressions of degree 2 or more are handled differently, with return values. The quadratic and cubic formulas allow parameters to be used for 2nd and 3rd degree polynomials.
 
 
 """
 function Roots.CommonSolve.solve(ex::SymbolicEquation)
     l, r = ex.lhs, ex.rhs
+
+
+    if is_polynomial(l - r)
+        cs = polynomial_coeffs(l-r)
+        length(cs) > 2 && return solve_polynomial(l - r)
+    end
+
     nex = nothing
     if !hassymbolic(r)
-        a,op = inverse(l)
+        a, op = inverse(l)
         op != identity && (nex = a ~ op(r))
     elseif !hassymbolic(l)
         a,op = inverse(r)

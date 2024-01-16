@@ -37,11 +37,19 @@ using Test
     quadgk(u, a, b)
     quadgk(u, I)
 
-    # solve
+    # numeric solve
     ips = solve(eq, I)
     @test sin.(ips) ≈ cos.(ips)
     @test solve(eq, a) ≈ first(ips)
     @test solve(eq, a) ≈ newton(sin(x) - cos(x), a) # no Equation interface for newton
+end
+
+@testset "plots" begin
+    @symbolic x
+    u = sin(x)
+    eq = sin(x) ~ cos(x)
+    a, b = 0, 2pi
+    I = a..b
 
     # plots
     p₁ = plot(u, a, b)
@@ -59,16 +67,16 @@ using Test
 
     nothing
 
-
 end
-
-
-@testset "solve" begin
+@testset "symbolic solve" begin
     @symbolic x p
 
-    eqn = x^2 + 3 ~ 4
+    eqn = x + 3 ~ 4
     @test solve(eqn).rhs() ≈ 1
     @test isa(solve(eqn).lhs(), SimpleExpressions.Symbolic)
+
+    m,b = p[1], p[2]
+    @test solve(m*x + b ~ -40).rhs(:, (9/5, 32)) == -40
 
     eqn = sin(x) ~ 1//2
     @test solve(eqn).rhs() ≈ asin(1//2)
@@ -79,10 +87,26 @@ end
     eqn = log(x) ~ p
     solve(eqn).rhs(:, 2) ≈ exp(2)
 
+    # polynomials of degree 2 or more are different; they return vectors
+    eqn = x^2 - x ~ 1
+    a,b = solve(eqn)
+    @test a() == (1 + sqrt(5))/2
+    @test b() == (1 - sqrt(5))/2
+
+    # quadratics may have parameters
+    eqn = x^2 - x ~ p
+    a,b = solve(eqn)
+    @test a(:,1) == (1 + sqrt(5))/2
+
+    # higher order are just numbers
+    us = solve(x^5 - x ~ 1)
+    @test only(filter(isreal, us)) ≈ 1.16730397826
+
     # fails, can be silent or error
     eqn = sin(x) ~ cos(x)
     @test !isa(solve(eqn).lhs(), SimpleExpressions.Symbolic)
 
     eqn = sin(x) ~ 2
     @test_throws DomainError solve(eqn).rhs()
+
 end
