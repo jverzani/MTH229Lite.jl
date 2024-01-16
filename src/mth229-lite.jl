@@ -43,7 +43,7 @@ Base.length(::Interval) = 2
     solve(ex::SymbolicEquation, x₀, args...; kwargs...)
     solve(ex::SymbolicEquation, x₀::Interval; kwargs...)`
 
-Numerically solve an equation specified with an [`@symbolic`](@ref) value.
+Numerically solve an equation specified with an `@symbolic` value.
 
 The `find_zero` or `find_zeros` function is used, the latter when `x₀` is of type `Interval` (specified with the `..` infix operator.
 
