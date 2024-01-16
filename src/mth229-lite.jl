@@ -20,10 +20,17 @@ There are methods for
 * `solve(eq, I)` (dispatch to find_zeros)
 * `sign_chart`, `riemann`, `quadgk`
 
-Rhere are parsing gotchas
+There are parsing gotchas
 * `-1..2` is okay
 * `-2..-1` is not, try `-2..(-1)`
-* `-1..x^2` will parse as `Interval(-1,x^2)`, also `-1..x+2` becomes `Interval(-1, x_1)`, as `..` has low precedence.
+* `-1..x^2` will parse as `Interval(-1,x^2)`, also `-1..x+2` becomes `Interval(-1, x+2)`, as `..` has low precedence.
+
+Displays with unicode brackets to disambiguate from vector or tuple:
+
+```julia
+julia> -2..1
+⟦-2, 1⟧
+```
 """
 struct Interval{T}
     a::T
@@ -35,6 +42,8 @@ function Base.iterate(i::Interval, state=nothing)
     state == 1 && return (i.b, 2)
     nothing
 end
+Base.show(io::IO, i::Interval) = print(io, "⟦", i.a, ", ", i.b, "⟧")
+
 Base.length(::Interval) = 2
 # solve just seems kind of natural here
 # solve(eqn, I::Interval) -> find_zeros
@@ -43,7 +52,7 @@ Base.length(::Interval) = 2
     solve(ex::SymbolicEquation, x₀, args...; kwargs...)
     solve(ex::SymbolicEquation, x₀::Interval; kwargs...)`
 
-Numerically solve an equation specified with an `@symbolic` value.
+Numerically solve an equation specified with a `@symbolic` value.
 
 The `find_zero` or `find_zeros` function is used, the latter when `x₀` is of type `Interval` (specified with the `..` infix operator.
 
