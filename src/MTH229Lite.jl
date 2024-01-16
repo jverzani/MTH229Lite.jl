@@ -1,7 +1,7 @@
 """
     MTH229Lite
 
-Support files for MTH229. Unlike the `MTH229` package, this package omits `SymPy` and has a simplified plotting setup for running within resource-constrained environments, such as binder.org.
+Support files for MTH229. Unlike the `MTH229` package, this package omits `SymPy` and has a simplified plotting setup for running within resource-constrained environments, such as binder.org (e.g. [mth229lite](https://mybinder.org/v2/gh/mth229/229-projects/lite?labpath=blank-notebook.ipynb)).
 
 Exports:
 * `e` aliased to `exp(1)`
