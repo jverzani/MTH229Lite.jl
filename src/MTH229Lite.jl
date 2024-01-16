@@ -29,7 +29,7 @@ using Reexport
 @reexport using QuadGK
 @info "Loading `SimpleExpressions` for using a symbolic value. No `SymPy` is available"
 @reexport using SimpleExpressions
-import SimpleExpressions: hassymbolic, issymbolic
+import SimpleExpressions: hassymbolic, issymbolic, free_symbol
 import SimpleExpressions: AbstractSymbolic, Symbolic, SymbolicNumber, SymbolicParameter, SymbolicExpression, SymbolicEquation
 
 

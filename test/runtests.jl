@@ -78,6 +78,10 @@ end
     m,b = p[1], p[2]
     @test solve(m*x + b ~ -40).rhs(:, (9/5, 32)) == -40
 
+    eqn = 3x + 7 ~ 2x + 8
+    u = solve(eqn)
+    @test eqn.lhs(u.rhs()) == eqn.rhs(u.rhs())
+
     eqn = sin(x) ~ 1//2
     @test solve(eqn).rhs() ≈ asin(1//2)
 

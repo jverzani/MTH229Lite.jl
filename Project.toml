@@ -1,7 +1,7 @@
 name = "MTH229Lite"
 uuid = "f77d288f-08b5-411b-868b-e56fbdf518b4"
 authors = ["jverzani <jverzani@gmail.com> and contributors"]
-version = "1.0.2"
+version = "1.0.3"
 
 [deps]
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
@@ -22,7 +22,7 @@ PlotlyLight = "0.7"
 QuadGK = "2"
 Reexport = "1"
 Roots = "2.0.22"
-SimpleExpressions = "1.0.8"
+SimpleExpressions = "1.0.9"
 SpecialFunctions = "1,2"
 Test = "1.9"
 julia = "1.9"
