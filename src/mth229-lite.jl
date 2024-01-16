@@ -39,11 +39,11 @@ Base.length(::Interval) = 2
 # solve just seems kind of natural here
 # solve(eqn, I::Interval) -> find_zeros
 # solve(eqn, x₀) find_zero
-""""
+"""
     solve(ex::SymbolicEquation, x₀, args...; kwargs...)
     solve(ex::SymbolicEquation, x₀::Interval; kwargs...)`
 
-Numerically solve an equation specified withg a symbol.
+Numerically solve an equation specified with an `@symbolic` value.
 
 The `find_zero` or `find_zeros` function is used, the latter when `x₀` is of type `Interval` (specified with the `..` infix operator.
 

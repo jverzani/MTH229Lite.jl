@@ -42,9 +42,12 @@ Polynomial expressions of degree 2 or more are handled differently, with return 
 function Roots.CommonSolve.solve(ex::SymbolicEquation)
     l, r = ex.lhs, ex.rhs
 
-
     if is_polynomial(l - r)
         cs = polynomial_coeffs(l-r)
+        if length(cs) == 2
+            𝑥 = free_symbol(l-r)
+            return 𝑥 ~ -cs[1]/cs[2]
+        end
         length(cs) > 2 && return solve_polynomial(l - r)
     end
 
@@ -61,11 +64,11 @@ function Roots.CommonSolve.solve(ex::SymbolicEquation)
 end
 
 
-inverse(ex::SymbolicExpression) = inverse(ex.op, ex.arguments)
-
 # inverse of outer(inner) returns
 # inner, x -> outer⁻¹
 # or errors
+inverse(ex::SymbolicExpression) = inverse(ex.op, ex.arguments)
+
 inverse(a::Any) = (a, identity)
 inverse(x::Symbolic) = (x, identity)
 inverse(p::SymbolicParameter) = (p, identity)
