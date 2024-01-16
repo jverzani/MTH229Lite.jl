@@ -1,5 +1,5 @@
 # Find roots of a polynomial
-function polynomial_roots(u::SimpleExpressions.AbstractSymbolic; kwargs...)
+function polynomial_roots(u::AbstractSymbolic; kwargs...)
     comp = companion(collect(Float64, polynomial_coeffs(u)))
     eigvals(comp; kwargs...)
 end
@@ -12,7 +12,7 @@ struct _Polynomial
 end
 
 # get polynomial coefficients or throw error
-function polynomial_coeffs(u::SimpleExpressions.AbstractSymbolic)
+function polynomial_coeffs(u::AbstractSymbolic)
     𝑥 = _Polynomial((0,1))
     p = try
         u(𝑥)
@@ -22,13 +22,36 @@ function polynomial_coeffs(u::SimpleExpressions.AbstractSymbolic)
     [get(p.coeffs,i,0) for i ∈ 0:maximum(keys(p.coeffs))]
 end
 
-function is_polynomial(u::SimpleExpressions.AbstractSymbolic)
+function is_polynomial(u::AbstractSymbolic)
     try
         polynomial_coeffs(u)
         true
     catch err
         false
     end
+end
+
+# return solutions as vector
+function solve_polynomial(p::AbstractSymbolic)
+    cs = polynomial_coeffs(p)
+    d = length(cs) - 1
+    d == 1 && return [-cs[1]/cs[2]]
+    if d == 2
+        c, b, a = cs
+        Δ = b^2 - 4*a*c
+        Δ = issymbolic(Δ) ? Δ : SymbolicNumber(Δ)
+        return (-b .+ [sqrt(Δ), -sqrt(Δ)]) ./ (2a)
+    end
+    if d == 3
+        ps₀, ps₁, ps₂, ps₃ = cs
+        u1 = -ps₂/(3*ps₃) - (-3*ps₁/ps₃ + ps₂^2/ps₃^2)/(3*cbrt(27*ps₀/(2*ps₃) - 9*ps₁*ps₂/(2*ps₃^2) + ps₂^3/ps₃^3 + sqrt(-4*(-3*ps₁/ps₃ + ps₂^2/ps₃^2)^3 + (27*ps₀/ps₃ - 9*ps₁*ps₂/ps₃^2 + 2*ps₂^3/ps₃^3)^2)/2)) - cbrt(27*ps₀/(2*ps₃) - 9*ps₁*ps₂/(2*ps₃^2) + ps₂^3/ps₃^3 + sqrt(-4*(-3*ps₁/ps₃ + ps₂^2/ps₃^2)^3 + (27*ps₀/ps₃ - 9*ps₁*ps₂/ps₃^2 + 2*ps₂^3/ps₃^3)^2)/2)/3
+        u2 = -ps₂/(3*ps₃) - (-3*ps₁/ps₃ + ps₂^2/ps₃^2)/(3*(-1/2 - sqrt(3)*I/2)*cbrt(27*ps₀/(2*ps₃) - 9*ps₁*ps₂/(2*ps₃^2) + ps₂^3/ps₃^3 + sqrt(-4*(-3*ps₁/ps₃ + ps₂^2/ps₃^2)^3 + (27*ps₀/ps₃ - 9*ps₁*ps₂/ps₃^2 + 2*ps₂^3/ps₃^3)^2)/2)) - (-1/2 - sqrt(3)*I/2)*cbrt(27*ps₀/(2*ps₃) - 9*ps₁*ps₂/(2*ps₃^2) + ps₂^3/ps₃^3 + sqrt(-4*(-3*ps₁/ps₃ + ps₂^2/ps₃^2)^3 + (27*ps₀/ps₃ - 9*ps₁*ps₂/ps₃^2 + 2*ps₂^3/ps₃^3)^2)/2)/3
+        u3 = -ps₂/(3*ps₃) - (-3*ps₁/ps₃ + ps₂^2/ps₃^2)/(3*(-1/2 + sqrt(3)*I/2)*cbrt(27*ps₀/(2*ps₃) - 9*ps₁*ps₂/(2*ps₃^2) + ps₂^3/ps₃^3 + sqrt(-4*(-3*ps₁/ps₃ + ps₂^2/ps₃^2)^3 + (27*ps₀/ps₃ - 9*ps₁*ps₂/ps₃^2 + 2*ps₂^3/ps₃^3)^2)/2)) - (-1/2 + sqrt(3)*I/2)*cbrt(27*ps₀/(2*ps₃) - 9*ps₁*ps₂/(2*ps₃^2) + ps₂^3/ps₃^3 + sqrt(-4*(-3*ps₁/ps₃ + ps₂^2/ps₃^2)^3 + (27*ps₀/ps₃ - 9*ps₁*ps₂/ps₃^2 + 2*ps₂^3/ps₃^3)^2)/2)/3
+        return [u1, u2, u3]
+    end
+    # d ≥ 4 use roots approach
+    comp = companion(collect(Float64, cs))
+    return eigvals(comp)
 end
 
 function companion(coeffs::Vector{T}) where {T}
@@ -71,7 +94,7 @@ end
 
 # unary
 Base.:-(p::_Polynomial) = map(x -> -x, p)
-const NUMBER = Union{Number, SimpleExpressions.SymbolicParameter}
+const NUMBER = Union{Number, SymbolicParameter, SymbolicNumber}
 
 # scalar
 function Base.:+(p::_Polynomial, c::NUMBER)
@@ -80,7 +103,11 @@ function Base.:+(p::_Polynomial, c::NUMBER)
     _Polynomial(p.x, d)
 end
 Base.:+(c::NUMBER, p::_Polynomial) = p + c
-Base.:(-)(p::_Polynomial, c::NUMBER) = p + (-c)
+function Base.:(-)(p::_Polynomial, c::NUMBER) # should just be p + (-c)??
+    d = deepcopy(p.coeffs)
+    d[0] = get(d,0,0) - c
+    _Polynomial(p.x, d)
+end
 Base.:-(c::NUMBER, p::_Polynomial) = (-p) + c
 Base.:(*)(p::_Polynomial, c::NUMBER) = map(x -> x*c, p)
 Base.:(*)(c::NUMBER, p::_Polynomial) = map(x -> c*x, p)
@@ -102,6 +129,7 @@ function Base.:(+)(p::_Polynomial, q::_Polynomial)
     d = deepcopy(p.coeffs)
     for (k,v) ∈ q.coeffs
         pₖ = get(p.coeffs, k, 0)
+        u = pₖ + v
         d[k] = pₖ + v
     end
     _Polynomial(p.x,d)
@@ -113,7 +141,10 @@ function Base.:(*)(p::_Polynomial, q::_Polynomial)
     pq = _Polynomial()
     for (k,v) ∈ p.coeffs
         for (l,w) ∈ q.coeffs
-            pq.coeffs[k+l] = get(pq.coeffs, k+l, 0) + v*w
+            m = k + l
+            a = get(pq.coeffs, k+l, 0)
+            b = v * w
+            pq.coeffs[k+l] = get(pq.coeffs, k+l, 0) + (v*w)
         end
     end
     pq
