@@ -4,7 +4,7 @@
 """
     solve(ex::SymbolicEquation)
 
-Tries to solve a symbolic equation by applying applicable identity functions or using polynomial roots. Pretty limited.
+Tries to solve a symbolic equation by applying applicable inverse functions or using polynomial roots. Pretty limited.
 
 
 

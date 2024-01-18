@@ -1,4 +1,11 @@
 ## --- plotting
+export plot, plot!, scatter, scatter!,  contour, contour!, surface, surface!, quiver, quiver!
+export grid_layout
+export annotate, annotate!, title!, size!, legend!
+export xlabel!, ylabel!, xlims!, ylims!, xaxis!, yaxis!
+export rect!, circle!, hline!, vline!
+export gcf
+export plotif
 
 ## create a simplish 2D Plots.plot like interface for PlotlyLight.Plot
 
@@ -6,11 +13,21 @@
 const current_plot = Ref{Plot}() # store current plot
 const first_plot = Ref{Bool}(true) # for first plot warning
 
+"""
+    gcf()
+
+Get current figure. A `Plot` object of `PlotlyLight`. Not typically needed,
+as it is implicit in most mutating calls, though may be convenient if those happen within a loop.
+
+"""
+gcf() = current_plot[]           # get current figure
+
 # make a new plot by calling `PlotlyLight.Plot`
 function _new_plot(;
                    width=800, height=600,
                    xlims=nothing, ylims=nothing,
                    legend = nothing,
+                   aspect_ratio=nothing,
                    kwargs...)
     p = Plot(Config[], # data
              Config(), # layout
@@ -28,6 +45,7 @@ function _new_plot(;
 
     # layout
     legend!(p, legend)
+    aspect_ratio == :equal && (p.layout.yaxis.scaleanchor="x")
 
     p
 end
@@ -40,12 +58,50 @@ function _merge!(c::Config; kwargs...)
         c[k] = v
     end
 end
+function _merge!(c::Config, d::Config)
+    for (k, v) ∈ d
+        c[k] = v
+    end
+end
+
 
 function _join!(xs, delim="")
     xs′ = filter(!isnothing, xs)
     isempty(xs′) && return nothing
     join(string.(xs′), delim)
 end
+
+# from some.jl
+_something() = nothing
+_something(x::Nothing, xs...) = _something(xs...)
+_something(x::Any, xs...) = x
+# from Missings.jl
+
+_allowmissing(x::AbstractArray{T}) where {T} = convert(AbstractArray{Union{T, Missing}}, x)
+
+function Base.extrema(p::Plot)
+    mx,Mx = (Inf, -Inf)
+    my,My = (Inf, -Inf)
+    mz,Mz = (Inf, -Inf)
+    for d ∈ p.data
+        if haskey(d, :x)
+            a,b = extrema(d.x)
+            mx = min(a, mx); Mx = max(b, Mx)
+        end
+        if haskey(d, :y)
+            a,b = extrema(filter(!isnothing, d.y))
+            my = min(a, my); My = max(b, My)
+        end
+        if haskey(d, :z)
+            a,b = extrema(d.z)
+            mz = min(a, mz); Mz = max(b, Mz)
+        end
+
+    end
+    (x = (mx, Mx), y = (my, My), z = (mz, Mz))
+end
+
+
 
 
 ## ----
@@ -63,7 +119,7 @@ Returns a `Plot` instance from [PlotlyLight](https://github.com/JuliaComputing/P
 * linewidth: width of line
 * label
 
-Other keyword arguments include `width` and `height`, `xlims` and `ylims`, `legend`.
+Other keyword arguments include `width` and `height`, `xlims` and `ylims`, `legend`, `aspect_ratio`.
 
 Provides an interface like `Plots.plot` for plotting a function `f` using `PlotlyLight`. This just scratches the surface, but `PlotlyLight` allows full access to the underlying `JavaScript` [library](https://plotly.com/javascript/) library.
 
@@ -72,13 +128,21 @@ The provided "`Plots`-like" functions are [`plot`](@ref), [`plot!`](@ref), [`sca
 # Example
 
 ```
-plot(sin, 0, 2pi; legend=false)
+p = plot(sin, 0, 2pi; legend=false)
 plot!(cos)
+# add points
 x0 = [pi/4, 5pi/4]
 scatter!(x0, sin.(x0), markersize=10)
+# add text
 annotate!(tuple(zip(x0, sin.(x0), ("A", "B"))...), halign="left", pointsize=12)
 title!("Sine and cosine and where they intersect in [0,2π]")
+# adjust limits
 ylims!((-3/2, 3/2))
+# add shape
+y0, y1 = extrema(p).y
+[rect!(xᵢ-0.1, xᵢ+0.1, y0, y1, fillcolor="gray", opacity=0.2) for xᵢ ∈ x0]
+# display plot
+p
 ```
 
 !!! note "Warning"
@@ -108,35 +172,23 @@ Used to add a new tract to an existing plot. Like `Plots.plot!`
 function plot!(p::Plot, x, y;
                label = nothing,
                kwargs...)
+
     # fussiness to handle NaNs in `y` values
-    x, y = float(x), float(y)
-
-    y[isinf.(y)] .= NaN
-    nans = findall(isnan, y)
-
-    if !isempty(nans)
-        l = 1
-        push!(nans, length(y)+1)
-        for r ∈ nans
-            idx = l:(r-1)
-            l = r + 1
-            length(idx) <= 0 && continue
-            _push_line_trace!(p, x[idx], y[idx]; label, kwargs...)
-        end
-    else
-        _push_line_trace!(p, x, y; label, kwargs...)
-    end
-
+    y′ = [isfinite(yᵢ) ? yᵢ : nothing for yᵢ ∈ y]
+    _push_line_trace!(p, x, y′; label, kwargs...)
     p
 end
 
+# XXX not clean what is line=... and what is data
 function _push_line_trace!(p, x, y;
                            mode="lines",
+                           fill=nothing,
                            label = nothing, kwargs...
                            )
     c = Config(; x, y, mode=mode)
-    _linestyle!(c.line, kwargs...)
-    _merge!(c; name=label)
+    _linestyle!(c; kwargs...)
+    _merge!(c; name=label, fill)
+    _merge!(c; kwargs...)
     push!(p.data, c)
 end
 
@@ -149,7 +201,7 @@ function plot!(p::Plot, x, y, z;
     c = Config(;x,y,z,type="scatter3d", mode="lines")
     _merge!(c; name=label)
     _camera_position!(p.layout.scene.camera; center, up, eye)
-    _linestyle!(c.line, kwargs...)
+    _linestyle!(c; kwargs...)
     push!(p.data, c)
     p
 end
@@ -171,12 +223,7 @@ end
 plot!(p::Plot, f::Function, I::Interval; kwargs...) = plot!(f, I...; kwargs...)
 
 function plot!(p::Plot, f::Function; kwargs...)
-    m,M = (Inf, -Inf)
-    for d ∈ p.data
-        haskey(d, :x) || continue
-        a,b = extrema(d.x)
-        m = min(a, m); M = max(b,M)
-    end
+    m, M = extrema(p).x
     m < M || throw(ArgumentError("Can't identify interval to plot over"))
     plot!(p, f, m, M; kwargs...)
 end
@@ -201,7 +248,7 @@ function scatter!(p::Plot, x, y; kwargs...)
     idx = intersect(keep_x, keep_y)
 
     cfg = Config(;x=x[idx], y=y[idx], mode="markers", type="scatter")
-    _markerstyle!(cfg.marker; kwargs...)
+    _markerstyle!(cfg; kwargs...)
 
     push!(p.data, cfg)
 
@@ -220,7 +267,7 @@ function scatter!(p::Plot, x, y, z;
 
     cfg = Config(;x=x[idx], y=y[idx], z=z[idx],
                  mode="markers", type="scatter3d")
-    _markerstyle!(cfg.marker; kwargs...)
+    _markerstyle!(cfg; kwargs...)
 
     push!(p.data, cfg)
 
@@ -287,6 +334,65 @@ function surface!(p::Plot, x, y, z;
     p
 end
 
+
+# generalize shapes (line, rect, circle, ...)
+# fillcolor
+# line.color
+function _shape(type, x0, x1, y0, y1; line=nothing, kwargs...)
+    c = Config(; type, x0, x1, y0, y1)
+    _merge!(c; kwargs...)
+    !isnothing(line) && (c.line = Config(line))
+    c
+end
+
+function _add_shape!(p::Plot, d)
+    if isempty(p.layout.shapes)
+        p.layout.shapes = [d]
+    else
+        push!(p.layout.shapes, d)
+    end
+    p
+end
+
+function vline!(p::Plot, x::Real; kwargs...)
+    _add_shape!(p, _shape("line", x, x, extrema(p).y...; kwargs...))
+end
+vline!(x::Real; kwargs...) = vline!(current_plot[], x; kwargs...)
+
+function hline!(p::Plot, y::Real; kwargs...)
+    _add_shape!(p, _shape("line", extrema(p).x..., y, y; kwargs...))
+end
+hline!(x::Real; kwargs...) = hline!(current_plot[], x; kwargs...)
+
+"""
+    rect!([p::Plot], x0, x1, y0, y1; kwargs...)
+
+Draw rectangle shape.
+# Example
+Use named tuple for `line` for boundary.
+```
+rect!(p, 2,3,-1,1; line=(color=:gray,), fillcolor=:red, opacity=0.2)
+```
+"""
+function rect!(p::Plot, x0, x1, y0, y1; kwargs...)
+    _add_shape!(p, _shape("rect", x0, x1, y0, y1; kwargs...))
+end
+rect!(x0, x1, y0, y1; kwargs...) = rect!(current_plot[], x0, x1, y0, y1; kwargs...)
+
+"""
+    circle([p::Plot], x0, x1, y0, y1; kwargs...)
+
+Draw circle shape bounded in `[x0, x1] × [y0,y1]`. (Will adjust to non-equal sized boundary.)
+# Example
+Use named tuple for `line` for boundary.
+```
+circle!(p, 2,3,-1,1; line=(color=:gray,), fillcolor=:red, opacity=0.2)
+```
+"""
+function circle!(p::Plot, x0, x1, y0, y1; kwargs...)
+    _add_shape!(p, _shape("circle", x0, x1, y0, y1; kwargs...))
+end
+
 ## ----
 
 """
@@ -301,6 +407,7 @@ Add annotations to plot.
 * pointsize: text size
 * halign: one of "top", "bottom"
 * valign: one of "left", "right"
+* rotation: angle to rotate
 
 The `x`, `y`, `txt` values can be specified as 3 iterables or tuple of tuples.
 """
@@ -310,13 +417,14 @@ function annotate!(p::Plot, x, y, txt;
                    pointsize = nothing,
                    halign = nothing,
                    valign = nothing,
+                   rotation = nothing,
                    kwargs...)
 
     cfg = Config(; x, y, text=txt, mode="text", type="scatter")
 
-    textposition = join((halign, valign), " ")
-    _merge!(cfg; textposition)
-    _textstyle!(cfg.textfont; color, family, pointsize, kwargs...)
+    textposition = _something(strip(join(something.((halign, valign), ""), " ")))
+    #_merge!(cfg; textposition)
+    _textstyle!(cfg; color, family, pointsize, rotation, textposition, kwargs...)
 
     push!(p.data, cfg)
     p
@@ -325,6 +433,83 @@ end
 annotate!(p::Plot, anns::Tuple; kwargs...) = annotate!(p, unzip(anns)...; kwargs...)
 annotate!(x, y, txt; kwargs...) = annotate!(current_plot[], x, y, txt; kwargs...)
 annotate!(anns::Tuple; kwargs...) = annotate!(current_plot[], anns; kwargs...)
+
+# arrow from u to u + du with optional text at tail
+function _arrow(u,du,txt=nothing;
+                arrowhead=nothing,
+                arrowwidth=nothing,
+                arrowcolor=nothing,
+                showarrow=nothing,
+                kwargs...)
+    cfg = Config()
+    ax, ay = u
+    x, y = u .+ du
+    xref = axref = "x"
+    yref = ayref = "y"
+    _merge!(cfg; x, y, ax, ay,
+            text=txt,
+            xref,yref, axref, ayref,
+            arrowhead, arrowwidth, arrowcolor, showarrow,
+            kwargs...)
+    cfg
+end
+
+"""
+    quiver!([p::Plot], x, y, txt=nothing; quiver=(dx, dy), kwargs...)
+    quiver(x, y, txt=nothing; quiver=(dx, dy), kwargs...)
+
+* `(x,y)` are tail positions, optionally labeled by `txt`
+* `quiver` specifies vector part of arrow
+* `kwargs process `arrowhead::Int?`, `arrowwidth::Int?`, `arrowcolor`
+
+# Example
+
+```julia
+ts = range(0, 2pi, length=100)
+p = plot(sin.(ts), cos.(ts), linecolor="red")
+ts = range(0, 2pi, length=10)
+quiver!(p, cos.(ts), sin.(ts), quiver=(-sin.(ts), cos.(ts)), arrowcolor="red")
+p
+```
+
+This example shows how text can be rotated with angles in degrees and positive angles measured in a *clockwise* direction.
+
+```
+ts = range(0, 2pi, 100)
+p = plot(cos.(ts), sin.(ts), linecolor="red", aspect_ratio=:equal,
+    linewidth=20, opacity=0.2)
+
+txt = split("The quick brown fox jumped over the lazy dog")
+ts = range(0, 360, length(txt)+1)[2:end]
+for (i,t) ∈ enumerate(reverse(ts))
+    quiver!(p, [cosd(t)],[sind(t)],txt[i],
+            quiver=([0],[0]),
+            textangle=90-t,
+            font=(size=20,))
+end
+xaxis!(zeroline=false); yaxis!(zeroline=false) # remove zerolines
+p
+```
+"""
+function quiver!(p::Plot, x, y, txt=nothing; quiver=nothing, kwargs...)
+    us = zip(x,y)
+    dus = zip(quiver...)
+    as = _arrow.(us, dus, txt; kwargs...)
+    if isempty(p.layout.annotations)
+        p.layout.annotations = Config[]
+    end
+    append!(p.layout.annotations, as)
+    p
+end
+quiver!(x, y, txt=nothing; quiver=nothing, kwargs...) =
+    quiver!(current_plot[], x, y, txt; quiver=quiver, kwargs...)
+
+function quiver(as...; kwargs...)
+    p = _new_plot(; kwargs...)
+    quiver!(p, as...; kwargs...)
+end
+
+
 
 """
     title!([p::Plot], txt)
@@ -342,6 +527,37 @@ xlabel!(txt) = xlabel!(current_plot[], txt)
 
 ylabel!(p::Plot, txt) = (p.layout.yaxis.title=txt;p)
 ylabel!(txt) = ylabel!(current_plot[], txt)
+
+"""
+    xticks!([p::Plot]; kwargs...)
+    yticks!([p::Plot]; kwargs...)
+
+Adjust ticks on chart.
+* ticks: a container or range
+* ticklabels: optional labels (same length as `ticks`)
+* showticklabels::Bool
+"""
+xaxis!(p::Plot; kwargs...) = (_merge!(p.layout.xaxis, _axis(;kwargs...)); p)
+xaxis!(;kwargs...) = xaxis!(current_plot[]; kwargs...)
+yaxis!(p::Plot; kwargs...) = (_merge!(p.layout.yaxis, _axis(;kwargs...)); p)
+yaxis!(;kwargs...) = yaxis!(current_plot[]; kwargs...)
+# https://plotly.com/javascript/tick-formatting/ .. more to do
+function _axis(;ticks=nothing, ticktext=nothing, showticklabels=nothing,
+               autotick=nothing, showgrid=nothing, zeroline=nothing,
+               kwargs...
+                )
+    d = Config()
+    if !isnothing(ticks)
+        if isa(ticks, AbstractRange)
+            tickvals, tick0, dtick, nticks = nothing, first(ticks), step(ticks), length(ticks)
+        else
+            tickvals, tick0, dtick, nticks = ticks, nothing, nothing, nothing
+        end
+        _merge!(d; tickvals, tick0, dtick, nticks)
+    end
+    _merge!(d; ticktext, showticklabels, autotick, showgrid, zeroline)
+    d
+end
 
 "`legend!([p::Plot], legend::Bool)` hide/show legend"
 legend!(p::Plot, legend=nothing) = !isnothing(legend) && (p.layout.showlegend = legend)
@@ -376,30 +592,42 @@ scroll_zoom!(p::Plot,x::Bool) = p.config.scrollZoom = x
 scroll_zoom!(x::Bool) = scroll_zoom!(current_plot[], x)
 
 ## ---- configuration
+# These gather specific values for lines, marker and text style
 
-function _linestyle!(line::Config,
-                     linecolor=nothing, # string, symbol, RGB?
-                     linewidth=nothing, # pixels
-                     linestyle=nothing, # solid, dot, dashdot,
+# linecolor - color
+# linewidth - integer
+# linestyle: solic, dot, dashdot, ...
+# lineshape: linear, hv, vh, hvh, vhv, spline
+function _linestyle!(cfg::Config;
+                     linecolor = nothing, # string, symbol, RGB?
+                     linewidth = nothing, # pixels
+                     linestyle = nothing, # solid, dot, dashdot,
+                     lineshape = nothing,
                      kwargs...)
-    _merge!(line; color=linecolor, width=linewidth, dash=linestyle)
+    _merge!(cfg.line; color=linecolor, width=linewidth, dash=linestyle,
+            shape=lineshape)
+    _merge!(cfg; kwargs...)
 end
 
 
-function _markerstyle!(marker::Config;
+function _markerstyle!(cfg::Config;
                        markershape = nothing,
-                       markersize = nothing,
+                       markersize  = nothing,
                        markercolor = nothing,
                        kwargs...)
-    _merge!(marker; symbol=markershape, size=markersize, color=markercolor)
+    _merge!(cfg.marker; symbol=markershape, size=markersize, color=markercolor)
+    _merge!(cfg; kwargs...)
 end
 
-function _textstyle!(textfont::Config;
-                     color=nothing,
-                     family=nothing,
-                     pointsize=nothing,
+function _textstyle!(cfg::Config;
+                     color     = nothing,
+                     family    = nothing,
+                     pointsize = nothing,
+                     rotation  = nothing,
                      kwargs...)
-    _merge!(textfont, color=color, family=family, size=pointsize)
+    _merge!(cfg.textfont, color=color, family=family, size=pointsize,
+            textangle=rotation)
+    _merge!(cfg; kwargs...)
 end
 
 # The camera position and direction is determined by three vectors: up, center, eye.
@@ -434,7 +662,7 @@ function plotif(f,g, a, b; width=800, height=600,
     cs = identify_colors(g, xs)
     cols, l = rle(cs)
     xs′ = cumsum(l); pushfirst!(xs′, 1)
-    p = Plot(Config(), Config(), Config(); kwargs...)
+    p = _new_plot(;width, height, kwargs...)
     p.layout.showlegend = false
     size!(p; width=width, height=height)
     for i ∈ eachindex(cols)
@@ -443,7 +671,7 @@ function plotif(f,g, a, b; width=800, height=600,
 	end
     p
 end
-
+plotif(f, g, I::Interval; kwargs...) = plotif(f, g, I...; kwargs...)
 """
     grid_layout(ps::Array{<:Plot})
 

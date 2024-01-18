@@ -1,5 +1,6 @@
 using MTH229Lite
 using Documenter
+using PlotlyDocumenter
 
 DocMeta.setdocmeta!(MTH229Lite, :DocTestSetup, :(using MTH229Lite); recursive=true)
 
@@ -16,6 +17,7 @@ makedocs(;
     ),
     pages=[
         "Home" => "index.md",
+        "Reference/API" => "reference.md",
     ],
 )
 
