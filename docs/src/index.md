@@ -67,7 +67,9 @@ The basic means to plot a function `f` over the interval `[a,b]` is of the form 
 ```@example lite
 plot(sin, 0, 2pi)
 
-to_documenter(gcf()) # hide
+delete!(gcf().layout, :width)  # hide
+delete!(gcf().layout, :height) # hide
+to_documenter(gcf())           # hide
 ```
 
 The `sin` object refers to a the underlying function to compute sine. More commonly, the function is user-defined as `f`, or some such, and that function object is plotted.
@@ -80,7 +82,9 @@ u = exp(-x) * (sin(5x) + sin(101x))
 I = -1..2  # prints as ⟦-1, 2⟧
 plot(u, I)
 
-to_documenter(gcf()) # hide
+delete!(gcf().layout, :width)  # hide
+delete!(gcf().layout, :height) # hide
+to_documenter(gcf())           # hide
 ```
 
 Layers can be added to a basic plot. The notation follows `Plots.jl` and uses `Julia`'s convention of indicating functions which mutate their arguments with a `!`. The underlying plot is mutated (by adding a layer) and reference to this may or may not be in the `plot!` call. (When missing, the current plotting figure, determined by `gcf()`, is used.)
@@ -96,7 +100,9 @@ J = 0..pi/2
 plot!(x, J)      # limits can be specified
 plot!(1 - x^2/2, J)
 
-to_documenter(gcf()) # hide
+delete!(gcf().layout, :width)  # hide
+delete!(gcf().layout, :height) # hide
+to_documenter(gcf())           # hide
 ```
 
 More details on plotting are shown later.
@@ -198,7 +204,9 @@ plot(eqn, I; legend=false)
 ips = solve(eqn, I) # all solutions in I
 scatter!(ips, sin.(ips), markersize=10)
 
-to_documenter(gcf()) # hide
+delete!(gcf().layout, :width)  # hide
+delete!(gcf().layout, :height) # hide
+to_documenter(gcf())           # hide
 ```
 
 Here is an example that illustrates the mean value theorem and the helper functions `secant(f, a, b)` and `tangent(f, c)`.
@@ -217,7 +225,9 @@ end
 scatter!(ms, u.(ms), markersize=10)
 title!("Mean value theorem illustration")
 
-to_documenter(gcf()) # hide
+delete!(gcf().layout, :width)  # hide
+delete!(gcf().layout, :height) # hide
+to_documenter(gcf())           # hide
 ```
 
 ## First and second derivatives
@@ -232,7 +242,9 @@ I = -2..1
 u = exp(-x) * (sin(x) + sin(3x) + sin(5x))
 p = plotif(u, u', I) # show increasing
 
-to_documenter(p) # hide
+delete!(gcf().layout, :width)  # hide
+delete!(gcf().layout, :height) # hide
+to_documenter(gcf())           # hide
 ```
 
 The `sign_chart` function shows sign changes:
@@ -260,7 +272,9 @@ Now, `a` can't be negative, and can't be bigger than ``\sqrt{108/2}``:
 I = 0..sqrt(108/2)
 plot(V, I)
 
-to_documenter(gcf()) # hide
+delete!(gcf().layout, :width)  # hide
+delete!(gcf().layout, :height) # hide
+to_documenter(gcf())           # hide
 ```
 
 The answer is near `4`:
@@ -349,7 +363,9 @@ rect!(0, 2.5, y0, y1, fillcolor="#d3d3d3", opacity=0.2)
 rect!(2.5,6, y0, y1, line=(color="black",), fillcolor="orange", opacity=0.2)
 rect!(6, find_zero(f, 7), y0, y1, fillcolor="rgb(150,150,150)", opacity=0.2)
 
-to_documenter(gcf()) # hide
+delete!(gcf().layout, :width)  # hide
+delete!(gcf().layout, :height) # hide
+to_documenter(gcf())           # hide
 ```
 
 The values are not uniformly chosen, rather where there is more curvature there is more sampling. For illustration purposes, this is emphasized in a few ways: using `quiver!` to add labeled arrows and `rect!` to add rectangular shapes with transparent filling.
