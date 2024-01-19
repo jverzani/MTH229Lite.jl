@@ -310,7 +310,7 @@ Then `𝑎` is made symbolic and substituted in for `𝑎` which allows us to pr
 
 ```@example lite
 @symbolic 𝑎
-𝑎 = soln.rhs(:,𝑎)     # then substitute in 𝑎 for 𝑎
+ℎ = soln.rhs(:,𝑎)     # then substitute in 𝑎 for 𝑎
 𝑉 = 𝑎 * 𝑎 * ℎ
 I = 0..sqrt(108/2)
 plot(𝑉, I)            # near 4
@@ -368,7 +368,7 @@ As an aside, to do this "symbolically" is a bit awkward, as we might want both t
 r(h) = 3 + (4-3)/(15-0) * h # ⚠ not 3 + 1/15h!
 dv(h) = pi * r(h)^2
 Vb = first(SimpleExpressions.@symbolic_expression quadgk(dv, 0, b))
-solve(Vb ~ p, (0, 15), p = 473), solve(Vb ~ p, (0, 15/2), p = 473/2)
+solve(Vb ~ p, (0, 15), p = 473), solve(Vb ~ p, (0, 15), p = 473/2)
 ```
 
 !!! note "`@symbolic_expression`"
