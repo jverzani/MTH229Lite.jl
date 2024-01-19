@@ -650,7 +650,7 @@ function _camera_position!(camera::Config;
 end
 
 ## -----
-
+export rle, identify_colors
 """
     plotif(f, g, a, b)
 
@@ -658,16 +658,16 @@ Plot `f` colored depending on `g > 0` or `g < 0`.
 """
 function plotif(f,g, a, b; width=800, height=600,
                 kwargs...)
-    xs = collect(range(a, b, length=251))
+    N = 251
+    xs = collect(range(a, b, length=N))
     cs = identify_colors(g, xs)
     cols, l = rle(cs)
     xs′ = cumsum(l); pushfirst!(xs′, 1)
-    p = _new_plot(;width, height, kwargs...)
-    p.layout.showlegend = false
-    size!(p; width=width, height=height)
+    p = _new_plot(;width, height, legend=false, kwargs...)
     for i ∈ eachindex(cols)
 	us = xs[xs′[i]:xs′[i+1]]
-	push!(p.data, Config(x=us, y=f.(us), line=Config(color=cols[i])))
+	push!(p.data, Config(x=us, y=f.(us),
+                             mode="lines", line=Config(color=cols[i])))
 	end
     p
 end
