@@ -62,7 +62,7 @@ A symbolic expression can be used in place of a function for higher order functi
 
 As mentioned, this package avoids using `Plots.jl` for plotting, as that package can be resource intensive. This package provides a light-weight alternative which utilizes basically the same interface.
 
-The basic means to plot a function `f` over the interval `[a,b]` is of the form `plot(f, a, b)`. For example:
+The simplest means to plot a function `f` over the interval `[a,b]` is the pattern `plot(f, a, b)`. For example:
 
 ```@example lite
 plot(sin, 0, 2pi)
@@ -109,7 +109,7 @@ More details on plotting are shown later.
 
 ## Limits
 
-The `MTH229` package provides `lim` to illustrate limits *numerically*, as does `MTH229Lite`. For example, this makes a table of values illustrating how the (right) limit of ``f(x) = (cos(x) - 1)/x^2`` at ``0`` is ``-1/2``:
+The `MTH229` package provides `lim` to illustrate limits *numerically*, as does `MTH229Lite`. For example, this makes a table of values illustrating how the (right) limit of ``f(x) = (\cos(x) - 1)/x^2`` at ``0`` is ``-1/2``:
 
 ```@example lite
 lim((cos(x) - 1)/x^2, 0)
@@ -150,7 +150,6 @@ The `D` function will take a symbolic derivative of a function, as with `D(sin)`
     The use of `'` to find derivatives of functions is considered to be type piracy. Neither the type `Function` or the notation `'` is defined by this package. Type piracy is frowned on heavily, as it can quietly change behaviour in other packages when loaded. In this example, if `MTH229Lite` is loaded, an array of functions would not have the typical notion of "`'`" available. The `'` notation is pedagogically useful, but a recommended way to find the derivative of `f` at `x` is through `ForwardDiff.derivative(f, x)`.
 
 
-Of course, using `tangent` and `secant` can be bypassed, as noted in the comments.
 
 ## Zero finding
 
@@ -159,7 +158,7 @@ As illustrated at [mth229.github.io](https://mth229.github.io), an equation ``f(
 * The *bisection* method. For a continuous function, `f`, this method guarantees a solution within a **bracketing** interval `[a,b]`.
 * *Newton's* method. This rapidly solves the equation from an *initial* guess, provided the function is well behaved and the guess is a good one.
 
-(There are many more methods, of course, zero finding being one of the oldest algorithms.)
+(There are many more methods, of course, zero finding by the secant method being one of the oldest known mathematical algorithms.)
 
 This package, like `MTH229`, also provides the functions `bisection` and `newton` for carrying out these two algorithms.
 
@@ -170,7 +169,7 @@ More generally, the `Roots` package provides `find_zero` as an interface to seve
 * `find_zero(f, (a,b))` -- for `(a,b)` a **bracketing** interval -- will call a more robust variant of the bisection method.
 * `find_zero(f, a)` -- for an initial guess `a` -- will call a method similar to Newton's method (a hybrid secant method).
 
-The `find_zeros(f, a, b)` function call scans over the intervals `[a,b]` and numerically attempts to identify all zeros of `f`; `fzeros` is an alias.
+The `find_zeros(f, a, b)` function call scans over the interval `[a,b]` and numerically attempts to identify all zeros of `f`; `fzeros` is an alias.
 
 When a function is *not* continuous, such as $f(x) = 1/x$ at $0$, these bracketing methods may return values where the function has a *sign* change, though not a zero:
 
@@ -189,7 +188,7 @@ The `plot` generic has a method for symbolic equations which plots *both* functi
 The  `solve` generic has these variants for such symbolic equations
 
 * `solve(eqn, a)` uses the hybrid secant method starting at a
-* `solve(eqn, (a,b)` uses a bisection method for a bracketing interval
+* `solve(eqn, (a,b))` uses a bisection method for a bracketing interval
 * `solve(eqn, I)`, **where** `I` is an interval, uses `find_zeros` to scan for all zeros.
 * `solve(eqn)` attempts to solve the symbolic equation by applying inverse functions. It can also solve polynomials using their roots.
 
@@ -230,6 +229,8 @@ delete!(gcf().layout, :height) # hide
 to_documenter(gcf())           # hide
 ```
 
+Of course, using `tangent` and `secant` can be bypassed, as noted in the comments.
+
 ## First and second derivatives
 
 There is some support for working with first and second derivatives, similar to that provided in the `MTH229` package.
@@ -240,14 +241,14 @@ The `plotif(f, g, a, b)` function is provided to explore the graph of `f` depend
 @symbolic x
 I = -2..1
 u = exp(-x) * (sin(x) + sin(3x) + sin(5x))
-p = plotif(u, u', I) # show increasing
+p = plotif(u, u'', I) # show concave up
 
 delete!(gcf().layout, :width)  # hide
 delete!(gcf().layout, :height) # hide
 to_documenter(gcf())           # hide
 ```
 
-The `sign_chart` function shows sign changes:
+The `sign_chart` function shows sign changes, in this case of the derivative:
 
 ```@example lite
 sign_chart(u', I)
@@ -357,7 +358,7 @@ And to fill half that, we get
 find_zero(h, (0, 15), p = 473/2)
 ```
 
-This value is greater than half the height, a typical situation with drinking glasses.
+This value is greater than half the height to fill to ``473``, a typical situation with drinking glasses.
 
 ----
 
