@@ -214,9 +214,9 @@ Here is an example that illustrates the mean value theorem and the helper functi
 ```@example lite
 @symbolic x
 u = (x-1)*(x-2)*(x-3)
-a, b = 1/2, 7/2
+a, b = 0.5, 3.6
 
-plot(u, a..b; legend=false)
+plot(u, a..b; legend=false, linewidth=5)
 plot!(secant(u, a, b))    # or plot!(u(a) + (u(b)-u(a))/(b-a)*(x-a))
 ms = solve(u' ~ (u(b)-u(a))/(b-a), a..b)
 for m in ms
@@ -296,6 +296,31 @@ cps = find_zeros(V', I)
 [cps V''.(cps)]  # V''  is - at 6.0, a critical point, so at a local maximum
 ```
 
+----
+
+To solve this symbolically is possible, but requires a sleight of hand as to solve for `h` we make it symbolic and use `a` as a parameter:
+
+```@example lite
+@symbolic ℎ 𝑎         # sleight of hand here where 𝑎 is Symbolic, 𝑎 parameter
+constraint = 108 ~ 2𝑎^2 + 4𝑎*ℎ
+soln = solve(constraint)
+```
+
+Then `𝑎` is made symbolic and substituted in for `𝑎` which allows us to proceed:
+
+```@example lite
+@symbolic 𝑎
+𝑎 = soln.rhs(:,𝑎)     # then substitute in 𝑎 for 𝑎
+𝑉 = 𝑎 * 𝑎 * ℎ
+I = 0..sqrt(108/2)
+plot(𝑉, I)            # near 4
+𝑎₀ = solve(𝑉' ~ 0, 4)
+𝑎₀, ℎ(𝑎₀), 𝑉(𝑎₀)      # a cube: 𝑎₀ ≈ 𝑎(𝑎₀)
+```
+
+!!! note "`𝑎`, `ℎ`, `𝑉`?"
+    The symbols `h` and `V` were assigned to generic functions earlier and hence can't be repurposed as a variable, even a symbolic one. Unicode variants are used instead (e.g., `\ith[tab]`). While `Julia` is a dynamic language with the ability to change the type of value a variable name refers to, it keeps a separate table for generic functions and these names can't serve as variable names once added and vice versa.
+
 ## Integrals
 
 As with `MTH229`, a `riemann` function is provided for approximating definite integrals with  simple `Riemann` sums along with the trapezoid and Simpson's methods. The `quadgk` function from the `QuadGK` package is also imported for a more accurate and performant alternative. The `integrate` function from `SymPy` is not available -- only numeric integrals are.
@@ -334,7 +359,20 @@ find_zero(h, (0, 15), p = 473/2)
 
 This value is greater than half the height, a typical situation with drinking glasses.
 
+----
 
+As an aside, to do this "symbolically" is a bit awkward, as we might want both the function passed to `quadgk` and the limit of integration to be *different* symbolic values. But `SimpleExpressions` is really simple -- just one at a time. Here we use that to be the limit of integration.
+
+```@example lite
+@symbolic b p
+r(h) = 3 + (4-3)/(15-0) * h # ⚠ not 3 + 1/15h!
+dv(h) = pi * r(h)^2
+Vb = first(SimpleExpressions.@symbolic_expression quadgk(dv, 0, b))
+solve(Vb ~ p, (0, 15), p = 473), solve(Vb ~ p, (0, 15/2), p = 473/2)
+```
+
+!!! note "`@symbolic_expression`"
+    The `quadgk` function is not registered to work with symbolic values, like `b` above. Just evaluating `quadgk(dv, 0, b)` will error. The non-exported macro `@symbolic_expression` creates a symbolic expression -- a deferred function evaluation --  from a function call. This allows the expression to be used as a function, such as is done in the last line above.
 
 ## More on plotting
 
