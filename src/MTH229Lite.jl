@@ -42,10 +42,7 @@ using ForwardDiff
 @info "See `?MTH229Lite` for more details."
 export e, .., tangent, secant, fisheye, rangeclamp
 export lim, bisection, newton, D, sign_chart, riemann
-export plot, plot!, scatter, scatter!,  contour, surface
-export grid_layout
-export annotate, annotate!, title!, xlabel!, ylabel!, size!, xlims!, ylims!, legend!
-export unzip, plotif
+export unzip
 
 include("mth229-lite.jl")
 include("plot-utils.jl")

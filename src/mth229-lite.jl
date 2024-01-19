@@ -104,6 +104,7 @@ rangeclamp(f, hi=20, lo=-hi; replacement=NaN) = x -> lo < f(x) < hi ? f(x) : rep
 
 "`newton(f, x)` easy to use Newton's method; derivative computed using `f'`"
 newton(f, x; kwargs...) = find_zero((f, f'), x, Roots.Newton(); kwargs...)
+newton(f, fp, x; kwargs...) = find_zero((f, fp), x, Roots.Newton(); kwargs...)
 
 "`bisection(f, a, b)` naive bisection algorithm with primitive graphic. Use `find_zero(f, (a,b))` (or `fzero(f, a, b)`) for a more robust method."
 function bisection(f::Function, a, b)
