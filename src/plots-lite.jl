@@ -75,7 +75,7 @@ end
 _something() = nothing
 _something(x::Nothing, xs...) = _something(xs...)
 _something(x::Any, xs...) = x
-# from Missings.jl
+# from Missing.jl
 
 _allowmissing(x::AbstractArray{T}) where {T} = convert(AbstractArray{Union{T, Missing}}, x)
 

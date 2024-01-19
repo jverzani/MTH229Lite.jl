@@ -187,7 +187,7 @@ The  `solve` generic has these variants for such symbolic equations
 * `solve(eqn, I)`, **where** `I` is an interval, uses `find_zeros` to scan for all zeros.
 * `solve(eqn)` attempts to solve the symbolic equation by applying inverse functions. It can also solve polynomials using their roots.
 
-This example illustrates using `scatter!` to add a few points (see the more on ploting section):
+This example illustrates using `scatter!` to add a few points (see the more on plotting section):
 
 ```@example lite
 @symbolic x
