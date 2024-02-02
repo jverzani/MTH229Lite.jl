@@ -1,134 +1,3 @@
-"""
-    unzip(v, [vs...])
-    unzip(f::Function, a, b)
-
-Take container of points, return vector of corrodinated. Reverse of `zip`. Function version applies `f` to a range of points over `(a,b)` and then calls `unzip`.
-"""
-unzip(vs) = invert(vs) # use SplitApplyCombine.invert (copied below)
-#unzip(v,vs...) = unzip([v, vs...])
-unzip(r::Function, a, b, n) = unzip(r.(range(a, stop=b, length=n)))
-# return (xs, f.(xs)) or (f₁(xs), f₂(xs), ...)
-function unzip(f::Function, a, b)
-    n = length(f(a))
-    if n == 1
-        return PlotUtils.adapted_grid(f, (a,b))
-    else
-        xsys = [PlotUtils.adapted_grid(x->f(x)[i], (a,b)) for i ∈ 1:n]
-        xs = sort(vcat([xsys[i][1] for i ∈ 1:n]...))
-        return unzip(f.(xs))
-    end
-
-end
-
-## ----
-## This is lifted from SplitApplyCombine
-@inline function invert(a::AbstractArray{T}) where {T <: AbstractArray}
-    f = first(a)
-    innersize = size(a)
-    outersize = size(f)
-    innerkeys = keys(a)
-    outerkeys = keys(f)
-
-    @boundscheck for x in a
-        if size(x) != outersize
-            error("keys don't match")
-        end
-    end
-
-    out = Array{Array{eltype(T),length(innersize)}}(undef, outersize)
-    @inbounds for i in outerkeys
-        out[i] = Array{eltype(T)}(undef, innersize)
-    end
-
-    return _invert!(out, a, innerkeys, outerkeys)
-end
-
-function invert!(out::AbstractArray, a::AbstractArray)
-    innerkeys = keys(a)
-    outerkeys = keys(first(a))
-
-    @boundscheck for x in a
-        if keys(x) != outerkeys
-            error("keys don't match")
-        end
-    end
-
-    @boundscheck if keys(out) != outerkeys
-        error("keys don't match")
-    end
-
-    @boundscheck for x in out
-        if keys(x) != innerkeys
-            error("keys don't match")
-        end
-    end
-
-    return _invert!(out, a, innerkeys, outerkeys)
-end
-
-# Note: keys are assumed verified already
-function _invert!(out, a, innerkeys, outerkeys)
-    @inbounds for i ∈ innerkeys
-        tmp = a[i]
-        for j ∈ outerkeys
-            out[j][i] = tmp[j]
-        end
-    end
-    return out
-end
-
-# Tuple-tuple
-@inline function invert(a::NTuple{n, NTuple{m, Any}}) where {n, m}
-    if @generated
-        exprs = [:(tuple($([:(a[$j][$i]) for j in 1:n]...))) for i in 1:m]
-        return :(tuple($(exprs...)))
-    else
-        ntuple(i -> ntuple(j -> a[j][i], Val(n)), Val(m))
-    end
-end
-
-
-# Tuple-Array
-@inline function invert(a::NTuple{n, AbstractArray}) where {n}
-    arrayinds = keys(a[1])
-
-    @boundscheck for x in a
-        if keys(x) != arrayinds
-            error("indices are not uniform")
-        end
-    end
-
-    T = _eltypes(typeof(a))
-    out = similar(first(a), T)
-
-    @inbounds invert!(out, a)
-end
-
-@inline function invert!(out::AbstractArray{<:NTuple{n, Any}}, a::NTuple{n, AbstractArray}) where n
-    @boundscheck for x in a
-        if keys(x) != keys(out)
-            error("indices do not match")
-        end
-    end
-
-    if @generated
-        return quote
-            @inbounds for i in keys(out)
-                out[i] = $(:(tuple($([:( a[$j][i] ) for j in 1:n]...))))
-            end
-
-            return out
-        end
-    else
-        @inbounds for i in keys(out)
-            out[i] = map(x -> @inbounds(x[i]), a)
-        end
-
-        return out
-    end
-end
-
-## -----
 ## plotif
 function identify_colors(g, xs, colors=(:red, :blue, :black))
     F = (a,b) -> begin
@@ -189,4 +58,80 @@ function rle(v::Vector{T}) where {T}
     push!(lens, cl)
 
     return (vals, lens)
+end
+
+
+## -----
+import PlotlyLightLite.PlotlyLight: Config
+
+"""
+    plotif(f, g, a, b)
+
+Plot `f` colored depending on `g > 0` or `g < 0`.
+"""
+function plotif(f,g, a, b; width=800, height=600,
+                kwargs...)
+    N = 251
+    xs = collect(range(a, b, length=N))
+    cs = identify_colors(g, xs)
+    cols, l = rle(cs)
+    xs′ = cumsum(l); pushfirst!(xs′, 1)
+    p = PlotlyLightLite._new_plot(;width, height, legend=false, kwargs...)
+    for i ∈ eachindex(cols)
+	us = xs[xs′[i]:xs′[i+1]]
+	push!(p.data, Config(x=us, y=f.(us),
+                             mode="lines", line=Config(color=cols[i])))
+	end
+    p
+end
+plotif(f, g, I::Interval; kwargs...) = plotif(f, g, I...; kwargs...)
+
+
+## -----
+## Special case for plotting SymbolicEquations
+"""
+    plot(eqn::SymbolicEquation, a::Real, b::Real; kwargs...)
+    plot(eqn::SymbolicEquation, ab::Interval; kwargs...)
+
+Plot equation by plotting both left-hand side and right-hand side over the specified interval. Argument `linecolor` and `linewidth` may specify two distinct values.
+
+# Example
+```julia
+# cf. https://www.chebfun.org/examples/roots/Tiger.html
+@symbolic x
+u = 2*exp(x/2) * (sin(5*x) + sin(101*x))
+v = u - round(u)
+ab = -2..1
+p = plot(u ~ 0, ab; linecolor=("orange","blue"), linewidth=(nothing, 2), legend=false)
+xs = solve(v ~ 0, ab)
+filter!(x -> abs(v(x)) <= 1/8, xs) # no jumps, 345 left
+scatter!(xs, u.(xs); markercolor="black")
+```
+"""
+function PlotlyLightLite.plot(ex::SimpleExpressions.SymbolicEquation, a::Real, b::Real; kwargs...)
+    p = PlotlyLightLite._new_plot(; kwargs...)
+    plot!(p, ex, a, b; kwargs...)
+
+end
+
+PlotlyLightLite.plot(f::SimpleExpressions.SymbolicEquation, I::Interval; kwargs...) = plot(f, I.a, I.b; kwargs...)
+
+
+function PlotlyLightLite.plot!(p::Plot, ex::SimpleExpressions.SymbolicEquation, a::Real, b::Real; linecolor=nothing, linewidth=nothing, kwargs...)
+    lhs, rhs = ex.lhs, ex.rhs
+    fl = SimpleExpressions.issymbolic(lhs) ? lhs : ((x) -> lhs)
+    fr = SimpleExpressions.issymbolic(rhs) ? rhs : ((x) -> rhs)
+
+    lcₗ, lcᵣ = (isa(linecolor, Vector) || isa(linecolor, Tuple)) ?
+        (first(linecolor), last(linecolor)) :
+         (linecolor, linecolor)
+
+    lwₗ, lwᵣ = isnothing(linewidth) ?
+        (nothing, nothing) :
+        (first(linewidth), last(linewidth))
+
+
+    plot!(p, fl, a, b; linecolor=lcₗ, linewidth=lwₗ, kwargs...)
+    plot!(p, fr, a, b; linecolor=lcᵣ, linewidth=lwᵣ, kwargs...)
+    p
 end

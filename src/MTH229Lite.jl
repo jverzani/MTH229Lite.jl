@@ -13,15 +13,16 @@ Exports:
 * `riemann` a simple Riemann sum function. This package also exports `QuadGK` for real-world usage.
 * The operator `'` is overloaded for functions to find the derivative using the `ForwardDiff` package. See `D` also.
 * The `SimpleExpressions` package is included to create simple expressions to use in place of functions. There is no `SymPy` package provided, as is done with `MTH229`.
-* The `plot` and `plot!` functions provided are modeled after those in `Plots.jl` but utilize `PlotlyLight` as a plotting backend, as it requires far fewer resources than `Plots`. See the docstring for [`plot`](@ref) for an example.
+* The `PlotlyLightLite` package provides a basic plotting interface to `PlotlyLight`.
 """
 module MTH229Lite
 
 using Reexport
 @reexport using LinearAlgebra
 
-@info "Loading `PlotlyLight` for plotting. Also adding `plot` etc. See `?plot` for details."
-@reexport using PlotlyLight
+@info "Loading `PlotlyLightLite` for plotting. Also adding `plot` etc. See `?plot` for details."
+@reexport using PlotlyLightLite
+
 @info "Loading `Roots` for solving `f(x)=0`: `fzero`, `fzeros`, etc."
 @reexport using Roots
 @reexport using SpecialFunctions
@@ -31,10 +32,6 @@ using Reexport
 @reexport using SimpleExpressions
 import SimpleExpressions: hassymbolic, issymbolic, free_symbol
 import SimpleExpressions: AbstractSymbolic, Symbolic, SymbolicNumber, SymbolicParameter, SymbolicExpression, SymbolicEquation
-
-
-
-using PlotUtils
 
 @info "Loading `ForwardDiff` and overloading `f'` notation for derivatives"
 using ForwardDiff
@@ -46,7 +43,6 @@ export unzip
 
 include("mth229-lite.jl")
 include("plot-utils.jl")
-include("plots-lite.jl")
 include("polynomial.jl")
 include("inverse-functions.jl")
 end

@@ -34,7 +34,7 @@ Like the `MTH229` package, this pulls in various helper functions and also loads
 
 `MTH229` also loads the `SymPy` package for symbolic math and anticipates the use of `Plots`.
 
-The `PlotlyLight` package is  loaded by `MTH229Lite` and a lite version of a "`Plots.jl`"-like interface is provided. See examples below.
+The [`PlotlyLightLite`](https://jverzani.github.io/PlotlyLightLite.jl/dev/) package is  loaded by `MTH229Lite`,  a lite version of a `Plots.jl` utilizing the small but powerful `PlotlyLight` package.
 
 The symbolic math package `SymPy` is not loaded, as it is with the `MTH229` package. The `SimpleExpressions` package is provided, which has support for making symbolic expressions. It is very limited, but can still be useful.
 
@@ -60,16 +60,16 @@ A symbolic expression can be used in place of a function for higher order functi
 
 ## Plotting
 
-As mentioned, this package avoids using `Plots.jl` for plotting, as that package can be resource intensive. This package provides a light-weight alternative which utilizes basically the same interface.
+As mentioned, this package avoids using `Plots.jl` for plotting, as that package can be resource intensive. This package uses a light-weight alternative which utilizes basically the same interface for the basic graphics of calculus. It is provided by `PlotlyLightLite`, a bare-bones package leveraging the powerful `PlotlyLight` package.
 
 The simplest means to plot a function `f` over the interval `[a,b]` is the pattern `plot(f, a, b)`. For example:
 
 ```@example lite
 plot(sin, 0, 2pi)
 
-delete!(gcf().layout, :width)  # hide
-delete!(gcf().layout, :height) # hide
-to_documenter(gcf())           # hide
+delete!(current().layout, :width)  # hide
+delete!(current().layout, :height) # hide
+to_documenter(current())           # hide
 ```
 
 The `sin` object refers to a the underlying function to compute sine. More commonly, the function is user-defined as `f`, or some such, and that function object is plotted.
@@ -82,12 +82,12 @@ u = exp(-x) * (sin(5x) + sin(101x))
 I = -1..2  # prints as ⟦-1, 2⟧
 plot(u, I)
 
-delete!(gcf().layout, :width)  # hide
-delete!(gcf().layout, :height) # hide
-to_documenter(gcf())           # hide
+delete!(current().layout, :width)  # hide
+delete!(current().layout, :height) # hide
+to_documenter(current())           # hide
 ```
 
-Layers can be added to a basic plot. The notation follows `Plots.jl` and uses `Julia`'s convention of indicating functions which mutate their arguments with a `!`. The underlying plot is mutated (by adding a layer) and reference to this may or may not be in the `plot!` call. (When missing, the current plotting figure, determined by `gcf()`, is used.)
+Layers can be added to a basic plot. The notation follows `Plots.jl` and uses `Julia`'s convention of indicating functions which mutate their arguments with a `!`. The underlying plot is mutated (by adding a layer) and reference to this may or may not be in the `plot!` call. (When missing, the current plotting figure, determined by `current()`, is used.)
 
 ```@example lite
 @symbolic x
@@ -100,13 +100,21 @@ J = 0..pi/2
 plot!(x, J)      # limits can be specified
 plot!(1 - x^2/2, J)
 
-delete!(gcf().layout, :width)  # hide
-delete!(gcf().layout, :height) # hide
-to_documenter(gcf())           # hide
+delete!(current().layout, :width)  # hide
+delete!(current().layout, :height) # hide
+to_documenter(current())           # hide
 ```
 
-More details on plotting are shown later.
+Symbolic equations have both the left and right-hand sides plotted:
 
+```@example lite
+@symbolic x
+plot(cos(x) ~ 2x, 0..2pi)
+
+delete!(current().layout, :width)  # hide
+delete!(current().layout, :height) # hide
+to_documenter(current())           # hide
+```
 ## Limits
 
 The `MTH229` package provides `lim` to illustrate limits *numerically*, as does `MTH229Lite`. For example, this makes a table of values illustrating how the (right) limit of ``f(x) = (\cos(x) - 1)/x^2`` at ``0`` is ``-1/2``:
@@ -203,9 +211,9 @@ plot(eqn, I; legend=false)
 ips = solve(eqn, I) # all solutions in I
 scatter!(ips, sin.(ips), markersize=10)
 
-delete!(gcf().layout, :width)  # hide
-delete!(gcf().layout, :height) # hide
-to_documenter(gcf())           # hide
+delete!(current().layout, :width)  # hide
+delete!(current().layout, :height) # hide
+to_documenter(current())           # hide
 ```
 
 Here is an example that illustrates the mean value theorem and the helper functions `secant(f, a, b)` and `tangent(f, c)`.
@@ -224,9 +232,9 @@ end
 scatter!(ms, u.(ms), markersize=10)
 title!("Mean value theorem illustration")
 
-delete!(gcf().layout, :width)  # hide
-delete!(gcf().layout, :height) # hide
-to_documenter(gcf())           # hide
+delete!(current().layout, :width)  # hide
+delete!(current().layout, :height) # hide
+to_documenter(current())           # hide
 ```
 
 Of course, using `tangent` and `secant` can be bypassed, as noted in the comments.
@@ -243,9 +251,9 @@ I = -2..1
 u = exp(-x) * (sin(x) + sin(3x) + sin(5x))
 p = plotif(u, u'', I) # show concave up
 
-delete!(gcf().layout, :width)  # hide
-delete!(gcf().layout, :height) # hide
-to_documenter(gcf())           # hide
+delete!(current().layout, :width)  # hide
+delete!(current().layout, :height) # hide
+to_documenter(current())           # hide
 ```
 
 The `sign_chart` function shows sign changes, in this case of the derivative:
@@ -273,9 +281,9 @@ Now, `a` can't be negative, and can't be bigger than ``\sqrt{108/2}``:
 I = 0..sqrt(108/2)
 plot(V, I)
 
-delete!(gcf().layout, :width)  # hide
-delete!(gcf().layout, :height) # hide
-to_documenter(gcf())           # hide
+delete!(current().layout, :width)  # hide
+delete!(current().layout, :height) # hide
+to_documenter(current())           # hide
 ```
 
 The answer is near `4`:
@@ -374,93 +382,3 @@ solve(Vb ~ p, (0, 15), p = 473), solve(Vb ~ p, (0, 15), p = 473/2)
 
 !!! note "`@symbolic_expression`"
     The `quadgk` function is not registered to work with symbolic values, like `b` above. Just evaluating `quadgk(dv, 0, b)` will error. The non-exported macro `@symbolic_expression` creates a symbolic expression -- a deferred function evaluation --  from a function call. This allows the expression to be used as a function, such as is done in the last line above.
-
-## More on plotting
-
-The plotting interface provided by `MTH229Lite` picks some of the many parts of `Plots.jl` that prove useful for the graphics of calculus and provides a similar interface using `PlotlyLight`, which otherwise is configured in a manner very-much like the underlying `JavaScript` implementation. The `Plots` package is great -- and has `Plotly` as a backend -- but for resource-constrained usage can be too demanding.
-
-The main function is `plot` (or `plot!`) which has been illustrated with a function and an interval, as specified with an interval (as `plot(f, a..b)`) or as two numbers (as `plot(f, a, b)`). This interface creates `x` and `y` values, which can be seen by calling `unzip(f, a, b)`. The work is done in the `plot(x, y)` interface including the handling of a few keyword arguments.
-
-The `plot(x, y)` function simply connects the points ``(x_1,y_1), (x_2,y_2),\dots``  with a line in a dot-to-dot manner (the `lineshape` argument can modify this). If values in `y` are non finite, then a break in the dot-to-dot graph is made.
-
-Related to `plot` and `plot!` is `scatter` (and `scatter!`) which plots just the points, but has no connecting dots.
-
-For example, this shows how one could visualize the points chosen in a plot, showcasing both `plot` and `scatter!` in addition to a few other plotting commands:
-
-```@example lite
-f(x) = x^2 * (108 - 2x^2)/4x
-x, y = unzip(f, 0, sqrt(108/2))
-plot(x, y; legend=false)
-scatter!(x, y, markersize=10)
-
-quiver!([2,4.3,6],[10,50,10], ["sparse","concentrated","sparse"],
-        quiver=([-1,0,1/2],[10,15,5]))
-
-# add rectangles to emphasize plot regions
-y0, y1 = extrema(gcf()).y  # get extent in `y` direction
-rect!(0, 2.5, y0, y1, fillcolor="#d3d3d3", opacity=0.2)
-rect!(2.5,6, y0, y1, line=(color="black",), fillcolor="orange", opacity=0.2)
-rect!(6, find_zero(f, 7), y0, y1, fillcolor="rgb(150,150,150)", opacity=0.2)
-
-delete!(gcf().layout, :width)  # hide
-delete!(gcf().layout, :height) # hide
-to_documenter(gcf())           # hide
-```
-
-The values are not uniformly chosen, rather where there is more curvature there is more sampling. For illustration purposes, this is emphasized in a few ways: using `quiver!` to add labeled arrows and `rect!` to add rectangular shapes with transparent filling.
-
-The are several keyword arguments used to adjust the defaults for the graphic, for example, `legend=false` and `markersize=10`. Some keyword names utilize `Plots.jl` naming conventions and are translated back to their `Plotly` counterparts. Additional keywords are passed as is so should use the `Plotly` names.
-
-Some keywords chosen to mirror `Plots.jl` are:
-
-| Argument | Used by | Notes |
-|:---------|:--------|:------|
-| `width`, `height` | new plot calls | set figure size, cf. `size!` |
-| `xlims`, `ylims`  | new plot calls | set figure boundaries, cf `xlims!`, `ylims!`, `extrema` |
-| `legend`          | new plot calls | set or disable legend |
-|`aspect_ratio`     | new plot calls | set to `:equal` for equal `x`-`y` axes |
-|`label`	    	| `plot`, `plot!`| set with a name for trace in legend |
-|`linecolor`		| `plot`, `plot!`| set with a color |
-|`linewidth`		| `plot`, `plot!`| set with an integer |
-|`linestyle`		| `plot`, `plot!`| set with `"solid"`, `"dot"`, `"dash"`, `"dotdash"`, ... |
-|`lineshape`		| `plot`, `plot!`| set with `"linear"`, `"hv"`, `"vh"`, `"hvh"`, `"vhv"`, `"spline"` |
-|`markershape`		| `scatter`, `scatter!` | set with `"diamond"`, `"circle"`, ... |
-|`markersize`		| `scatter`, `scatter!` | set with integer |
-|`markercolor`		| `scatter`, `scatter!` | set with color |
-|`color`			| `annotate!` | set with color |
-|`family`			| `annotate!` | set with string (font family) |
-|`pointsize`		| `annotate!` | set with integer |
-|`rotation`        	| `annotate!` | set with angle, degrees  |
-|`center`		   	| new ``3``d plots | set with tuple, see [controls](https://plotly.com/python/3d-camera-controls/) |
-|`up`				| new ``3``d plots | set with tuple, see [controls](https://plotly.com/python/3d-camera-controls/) |
-|`eye`				| new ``3``d plots | set with tuple, see [controls](https://plotly.com/python/3d-camera-controls/) |
-
-As seen in the example there are *many* ways to specify a color. These can be by name (as a string); by name (as a symbol), using HEX colors, using `rgb` (the use above passes a JavaScript command through a string). There are likely more.
-
-One of the `rect!` calls has a `line=(color="black",)` specification. This is a keyword argument from `Plotly`. Shapes have an interior and exterior boundary. The `line` attribute is used to pass in attributes, in this case the line color is black. A *named tuple* is used (which is why the trailing comma is needed for this single element tuple).
-
-As seen in this overblown example, there are other methods to plot different things. These include:
-
-* `scatter!` is used to plot points
-
-* `annotate!` is used to add annotations at a given point. There are keyword arguments to adjust the text size, color, font-family, etc.  There is also `quiver` which adds arrows and these arrows may have labels. The `quiver` command allows for text rotation.
-
-* `quiver!` is used to add arrows to a plot. These can optionally have their tails labeled, so this method can be repurposed to add annotations.
-
-* `contour` is used to create contour plots
-
-* `surface` is used to plot ``3``-dimensional surfaces.
-
-* `rect!` is used to make a rectangle. `Plots.jl` uses `Shape`. See also `circle!`.
-
-* `hline!` `vline!` to draw horizontal or vertical lines across the extent of the plotting region
-
-Some exported names are used to adjust a plot after construction:
-
-* `title!`, `xlabel!`, `ylabel!`: to adjust title; ``x``-axis label; ``y``-axis label
-* `xlims!`, `ylims!`: to adjust limits of viewing window
-* `xaxis!`, `yaxis!`: to adjust the axis properties
-* `grid_layout` to specify a cell-like layout using a matrix of plots.
-
-!!! note "Subject to change"
-    There are some names for keyword arguments that should be changed.
