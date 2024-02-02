@@ -22,6 +22,7 @@ using Reexport
 
 @info "Loading `PlotlyLightLite` for plotting. Also adding `plot` etc. See `?plot` for details."
 @reexport using PlotlyLightLite
+@reexport using PlotlyLightLite.PlotlyLight
 
 @info "Loading `Roots` for solving `f(x)=0`: `fzero`, `fzeros`, etc."
 @reexport using Roots
