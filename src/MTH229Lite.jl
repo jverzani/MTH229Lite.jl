@@ -4,16 +4,16 @@
 Support files for MTH229. Unlike the `MTH229` package, this package omits `SymPy` and has a simplified plotting setup for running within resource-constrained environments, such as binder.org (e.g. [mth229lite](https://mybinder.org/v2/gh/mth229/229-projects/lite?labpath=blank-notebook.ipynb)).
 
 Exports:
-* `e` aliased to `exp(1)`
-* `tangent(f,c)` and `secant(f,a,b)` for creating tangent and secant line functions
+* `e` is aliased to `exp(1)`
 * `rangeclamp` to restrict large `y` values; `fisheye` to change `x` axis scale; `unzip` to manipulate plotting limits
 * `lim` to explore limits numerically
 * `sign_chart` to explore sign changes numerically
-* `bisection` and `newton` for solving `f(x) = 0`. This package also exports `Roots` which exposes `find_zero` and `find_zeros` (and their aliases`fzero`, `fzeros`).
+* `bisection` and `newton` for solving `f(x) = 0`. This package also exports `Roots` which exposes `find_zero` and `find_zeros` (and their aliases `fzero` and `fzeros`).
+* `tangent(f,c)` and `secant(f,a,b)` for creating tangent and secant line functions
 * `riemann` a simple Riemann sum function. This package also exports `QuadGK` for real-world usage.
 * The operator `'` is overloaded for functions to find the derivative using the `ForwardDiff` package. See `D` also.
-* The `SimpleExpressions` package is included to create simple expressions to use in place of functions. There is no `SymPy` package provided, as is done with `MTH229`.
-* The `PlotlyLightLite` package provides a basic plotting interface to `PlotlyLight`.
+* The [PlotlyLightLite](https://jverzani.github.io/PlotlyLightLite.jl/dev/) package provides a basic plotting interface to `PlotlyLight`.
+* The [SimpleExpressions](https://jverzani.github.io/SimpleExpressions.jl/dev/) package is included to create simple expressions to use in place of functions. There is no `SymPy` package provided, as is done with `MTH229`.
 """
 module MTH229Lite
 
