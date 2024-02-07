@@ -65,8 +65,7 @@ In addition there are these plot constructors for higher-dimensional plots
 There are also numerous functions to modify attributes of an existing plot.
 
 """
-nothing
-#module PlotlyLightLite
+module PlotlyLightLite
 
 import PlotlyLight
 import PlotlyLight: Plot, Config
@@ -89,4 +88,4 @@ export gcf
 
 export unzip
 
-#end
+end

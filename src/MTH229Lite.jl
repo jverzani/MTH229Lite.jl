@@ -21,9 +21,8 @@ using Reexport
 @reexport using LinearAlgebra
 
 @info "Loading `PlotlyLightLite` for plotting. Also adding `plot` etc. See `?plot` for details."
-
-# Copy files into plotly_light_lite, edit out module
 include("plotly_light_lite/PlotlyLightLite.jl")
+@reexport using .PlotlyLightLite
 
 @info "Loading `Roots` for solving `f(x)=0`: `fzero`, `fzeros`, etc."
 @reexport using Roots
