@@ -21,8 +21,8 @@ using Reexport
 @reexport using LinearAlgebra
 
 @info "Loading `PlotlyLightLite` for plotting. Also adding `plot` etc. See `?plot` for details."
-@reexport using PlotlyLightLite
-@reexport using PlotlyLightLite.PlotlyLight
+include("plotly_light_lite/PlotlyLightLite.jl")
+@reexport using .PlotlyLightLite
 
 @info "Loading `Roots` for solving `f(x)=0`: `fzero`, `fzeros`, etc."
 @reexport using Roots
@@ -40,7 +40,7 @@ using ForwardDiff
 @info "See `?MTH229Lite` for more details."
 export e, .., tangent, secant, fisheye, rangeclamp
 export lim, bisection, newton, D, sign_chart, riemann
-export unzip
+export plotif
 
 include("mth229-lite.jl")
 include("plot-utils.jl")

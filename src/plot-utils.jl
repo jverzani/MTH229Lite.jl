@@ -62,7 +62,7 @@ end
 
 
 ## -----
-import PlotlyLightLite.PlotlyLight: Config
+import .PlotlyLightLite: plot, plot!, _new_plot
 
 """
     plotif(f, g, a, b)
@@ -76,7 +76,7 @@ function plotif(f,g, a, b; width=800, height=600,
     cs = identify_colors(g, xs)
     cols, l = rle(cs)
     xs′ = cumsum(l); pushfirst!(xs′, 1)
-    p = PlotlyLightLite._new_plot(;width, height, legend=false, kwargs...)
+    p = _new_plot(;width, height, legend=false, kwargs...)
     for i ∈ eachindex(cols)
 	us = xs[xs′[i]:xs′[i+1]]
 	push!(p.data, Config(x=us, y=f.(us),
@@ -108,16 +108,16 @@ filter!(x -> abs(v(x)) <= 1/8, xs) # no jumps, 345 left
 scatter!(xs, u.(xs); markercolor="black")
 ```
 """
-function PlotlyLightLite.plot(ex::SimpleExpressions.SymbolicEquation, a::Real, b::Real; kwargs...)
-    p = PlotlyLightLite._new_plot(; kwargs...)
+function plot(ex::SimpleExpressions.SymbolicEquation, a::Real, b::Real; kwargs...)
+    p = _new_plot(; kwargs...)
     plot!(p, ex, a, b; kwargs...)
 
 end
 
-PlotlyLightLite.plot(f::SimpleExpressions.SymbolicEquation, I::Interval; kwargs...) = plot(f, I.a, I.b; kwargs...)
+plot(f::SimpleExpressions.SymbolicEquation, I::Interval; kwargs...) = plot(f, I.a, I.b; kwargs...)
 
 
-function PlotlyLightLite.plot!(p::Plot, ex::SimpleExpressions.SymbolicEquation, a::Real, b::Real; linecolor=nothing, linewidth=nothing, kwargs...)
+function plot!(p::Plot, ex::SimpleExpressions.SymbolicEquation, a::Real, b::Real; linecolor=nothing, linewidth=nothing, kwargs...)
     lhs, rhs = ex.lhs, ex.rhs
     fl = SimpleExpressions.issymbolic(lhs) ? lhs : ((x) -> lhs)
     fr = SimpleExpressions.issymbolic(rhs) ? rhs : ((x) -> rhs)
