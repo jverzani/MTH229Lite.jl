@@ -5,13 +5,13 @@ s"""
 
 * positional arguments for data
 * keyword arguments for attributes
-* `plot()` is a workhorse with `seriestype` indicating which plot; there are alos special methods (e.g. `scatter(x,y)` becomes `plot(x,y; seriestype="scatter")`)
+* `plot()` is a workhorse with `seriestype` indicating which plot; there are also special methods (e.g. `scatter(x,y)` becomes `plot(x,y; seriestype="scatter")`)
 
 # `PlotlyLight.jl` uses
 
 * `data::Vector{Config}` to hold tracts of data for plotting
 * `layout::Config` to adjust layout
-* `config::Config` to adjust global configuations
+* `config::Config` to adjust global configurations
 * `Config` very flexibly creates the underlying Javascript objects the plotly interface expects
 * `Plot()` is a workhorse with `type` acting like `seriestype` and also `mode`
 
