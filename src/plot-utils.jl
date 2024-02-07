@@ -62,7 +62,7 @@ end
 
 
 ## -----
-import .PlotlyLightLite: _new_plot
+import .PlotlyLightLite: plot, plot!, _new_plot
 
 """
     plotif(f, g, a, b)
