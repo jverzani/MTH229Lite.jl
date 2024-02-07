@@ -2,7 +2,7 @@
 
 julia_version = "1.10.0"
 manifest_format = "2.0"
-project_hash = "1f29a1250b6880e878504fa8c2aaed184b596df0"
+project_hash = "71ca92c5792af5489a84ffab5ec98883dab4dd42"
 
 [[deps.ANSIColoredPrinters]]
 git-tree-sha1 = "574baf8110975760d391c710b6341da1afa48d8c"
@@ -458,14 +458,6 @@ deps = ["Artifacts", "Cobweb", "DefaultApplication", "Downloads", "EasyConfig", 
 git-tree-sha1 = "b842129ce0bc5fc230df8968738681a0db50223b"
 uuid = "ca7969ec-10b3-423e-8d99-40f33abb42bf"
 version = "0.7.4"
-
-[[deps.PlotlyLightLite]]
-deps = ["PlotUtils", "PlotlyLight"]
-git-tree-sha1 = "44a7d0e296622e65a5b292b5c5f8e1b0ed117e41"
-repo-rev = "main"
-repo-url = "https://github.com/jverzani/PlotlyLightLite.jl"
-uuid = "b323ca16-7103-4e40-9e60-7dc7d60a998a"
-version = "0.1.0"
 
 [[deps.PrecompileTools]]
 deps = ["Preferences"]
