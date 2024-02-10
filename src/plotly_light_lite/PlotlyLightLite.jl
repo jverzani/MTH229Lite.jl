@@ -1,4 +1,4 @@
-s"""
+"""
 `PlotlyLightLite` is a lightweight interface to the underlying `PlotlyLight` package (Fastest time-to-first-plot in Julia!), itself an "ultra-lightweight interface" to the `Plotly` javascript libraries. `PlotlyLightLite` supports *some* of the `Plots.jl` interface for plotting. This package may be of use as an alternative to `Plots` in resource-constrained environments, such as `binder`.
 
 # `Plots.jl` uses

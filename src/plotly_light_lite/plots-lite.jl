@@ -291,6 +291,13 @@ function plot(uv::NTuple{N,Function}, a, b=nothing; kwargs...) where {N}
     plot!(p, uv, a, b, kwargs...)
 end
 
+# Plots interface is 2/3 functions, not a tuple.
+plot(u::Function, v::Function, w::Function, args...; kwargs...) =
+    plot((u,v, w), args...; kwargs...)
+
+plot(u::Function, v::Function, args...; kwargs...) =
+    plot((u,v), args...; kwargs...)
+
 plot!(uv::Tuple{Function, Function}, a, b=nothing; kwargs...) =
     plot!(current_plot[], us, a, b; kwargs...)
 
@@ -644,8 +651,6 @@ p
 !!! note "3d arrows"
     3d arrows are possible using `arrows!`.
 
-
-
 """
 function quiver!(p::Plot, x, y, txt=nothing; quiver=nothing, kwargs...)
     us = zip(x,y)
@@ -685,8 +690,7 @@ end
 
 arrow!(tails, vs; kwargs...) = arrow!(current_plot[], tails, vs; kwargs...)
 
-function arrow!(p::Plot, tails, vs;
-                kwargs...)
+function arrow!(p::Plot, tails, vs; kwargs...)
     # what kind of data two points or
     # vectors of points
     _tail = first(tails)
@@ -707,6 +711,7 @@ function arrow!(p::Plot, ::Val{2}, tails, vs; kwargs...)
     p
 end
 
+
 # λ may change!
 # too fiddly
 function arrow!(p::Plot, ::Val{3}, tails, vs; λ = 0.1, showscale=false, kwargs...)
@@ -719,6 +724,7 @@ function arrow!(p::Plot, ::Val{3}, tails, vs; λ = 0.1, showscale=false, kwargs.
     x = collect(Iterators.flatten([[a,b,nothing] for (a,b) ∈ zip(x0,x1)]))
     y = collect(Iterators.flatten([[a,b,nothing] for (a,b) ∈ zip(y0,y1)]))
     z = collect(Iterators.flatten([[a,b,nothing] for (a,b) ∈ zip(z0,z1)]))
+
     d1 = Config(;x,y,z, type="scatter3d", mode="lines", showscale, kwargs...)
     push!(p.data, d1)
 
