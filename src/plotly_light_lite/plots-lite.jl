@@ -172,6 +172,7 @@ function _push_line_trace!(p, x, y;
     push!(p.data, c)
 end
 
+plot!(x, y, z; kwargs...) = plot!(current_plot[], x, y, z; kwargs...)
 function plot!(p::Plot, x, y, z;
                label = nothing,
                center=nothing, up=nothing, eye=nothing,
@@ -346,25 +347,94 @@ contour!(x, y, z; kwargs...) =
 contour!(x, y, f::Function; kwargs...) =
     contour!(current_plot[], x, y, f.(x', y); kwargs...)
 
+## XXX might have more options *if* used Contours and did this manually
 function contour!(p::Plot, x, y, z;
-                  colorscale = nothing,
-                  contours = nothing,
+                  levels = nothing, # a number or something w/ step method
+                  color = nothing, # scale or single color
+                  colorbar::Union{Nothing, Bool} = nothing, # show colorbar
+                  fill::Bool = false,
+                  contour_labels::Bool = false,
+                  linewidth = nothing,
                   kwargs...)
 
     c = Config(;x,y,z,type="contour")
+    c.contours = Config()
+    c.line = Config()
     _merge!(c; kwargs...)
 
-    !isnothing(colorscale) && (c.colorscale=colorscale)
-    if !isnothing(contours) # something with a step
-        l,r = extrema(contours); s = step(contours)
+
+    # color --> colorscale A symbol or name (or container)
+    # levels
+    !fill && (c.contours.coloring = "lines")
+
+    if !isnothing(color)
+        # support a named colorscale or a single color
+        builtin_color_scales = ("YlOrRd", "YlGnBu", "RdBu",
+                                "Portland", "Picnic", "Jet", "Hot",
+                                "Greys", "Greens", "Bluered",
+                                "Electric", "Earth","Blackbody")
+        if color ∈ builtin_color_scales
+            c.colorscale=color
+        else
+            c.line.color = color # no effect if coloring=lines!!!
+        end
+    end
+    !isnothing(linewidth) && (c.line.width = linewidth)
+    !isnothing(colorbar) && (c.showscale = colorbar)
+
+    if !isnothing(levels) # something with a step or single number
+        c.autocontour = false
+        if hasmethod(step, typeof(levels))
+            l,r = extrema(levels)
+            s = step(levels)
+        else
+            l = r = first(levels)
+            s = 0
+        end
         c.contours.start = l
         c.contours.size  = s
         c.contours."end" = r
     end
 
+    ## labels (adjust font? via contours.labelfont
+    c.contours.showlabels = contour_labels
 
     push!(p.data, c)
     p
+end
+
+"""
+    implicit_plot(f; xlims=(-5,5), ylims=(-5,5), legend=false, linewidth=2, kwargs...)
+    implicit_plot!([p::Plot], f; kwargs...)
+
+For `f(x,y) = ...` plot implicitly defined `y(x)` from `f(x,y(x)) = 0` over range specified by `xlims` and `ylims`.
+
+## Example
+```
+f(x,y) = x * y - (x^3 + x^2 + x + 1)
+implicit_plot(f)
+```
+
+(Basically just `contour` plot with `levels=0` and points detremined by extrema of `xlims` and `ylims`.)
+"""
+function implicit_plot(f::Function; kwargs...)
+    p = _new_plot(; kwargs...)
+    implicit_plot!(p, f; kwargs...)
+end
+
+implicit_plot!(f::Function; kwargs...) = implicit_plot!(current_plot[], f; kwargs...)
+function implicit_plot!(p::Plot, f::Function;
+                        xlims=(-5, 5), ylims=(-5, 5),
+                        legend=false,
+                        linewidth=2,
+                        kwargs...)
+
+    xs = range(extrema(xlims)..., length=100)
+    ys = range(extrema(ylims)..., length=100)
+    zs = f.(xs', ys)
+    contour!(p, xs, ys, zs;
+             levels=0,  colorbar=legend, linewidth,
+             kwargs...)
 end
 
 ##
@@ -411,6 +481,14 @@ Create surface plot. Pass `zcontour=true` to add contour plot projected onto the
 
 # Example
 
+```
+f(x,y) = 4 - x^2 - y^2
+xs = ys = range(-2, 2, length=50)
+surface(xs, ys, f)  # zs = f.(xs', ys)
+```
+
+## Extended help
+
 From https://discourse.julialang.org/t/3d-surfaces-time-slider/109673
 ```
 z1 = Vector[[8.83, 8.89, 8.81, 8.87, 8.9, 8.87],
@@ -449,6 +527,32 @@ surface(xs, ys, zs)
 ```
 
 
+Plotting a vertical plane poses a slight challenge, as we can't parameterize as `z=f(x,y)`. Here we intersect a surface with the plane `ax + by + 0z = d` and add a trace for the intersection of the two surfaces.
+
+```
+f(x, y) = 4 - (x^2 + y^2)
+
+# surface
+xs =  ys = range(-2, 2, length=100)
+zs = f.(xs', ys)
+
+# (vertical) plane
+m, M = extrema(zs)
+zzs = range(m, M, length=2)
+Xs = ((x,z) -> x).(xs', zzs)
+Zs = ((x,z) -> z).(xs', zzs)
+a, b, c, d = 1, 1, 0, 1
+plane(x,z) = (d - a*x - c*z) / b
+Ys = plane.(xs', zzs)
+
+# intersection
+g(t) = (d - a*t) / b
+γ(t) = (t, y(t), f(t, y(t)))
+
+surface(xs, ys, zs)
+surface!(Xs, Ys, Zs, opacity=0.2)
+plot!(unzip(γ.(xs))...; linewidth=3)
+```
 """
 function surface(x, y, z; kwargs...)
     p = _new_plot(; kwargs...)
@@ -484,6 +588,48 @@ function surface!(p::Plot, x, y, z;
     _camera_position!(p.layout.scene.camera; center, up, eye)
 
     push!(p.data, c)
+    p
+end
+
+"""
+    wireframe(x, y, z; kwargs...)
+    wireframe(x, y, f::Function; kwargs...)
+    wireframe!([p::Plot], x, y, z; kwargs...)
+    wireframe!([p::Plot], x, y, f::Function; kwargs...)
+
+Create wireframe.
+
+# Example
+
+```
+f(x, y) = 4 - x^2 - y^2
+xs = ys = range(-2, 2, length=100)
+surface(xs, ys, f)
+wireframe!(xs, ys, f)
+```
+"""
+function wireframe(x, y, z; kwargs...)
+    p = _new_plot(; kwargs...)
+    wireframe!(p, x, y, z; kwargs...)
+end
+
+wireframe(x, y, f::Function; kwargs...) =
+    wireframe(x, y, f.(x', y); kwargs...)
+
+wireframe!(x, y, z; kwargs...) =
+    wireframe!(current_plot[], x, y, z; kwargs...)
+
+wireframe!(x, y, f::Function; kwargs...) =
+    wireframe!(current_plot[], x, y, f.(x', y); kwargs...)
+
+function wireframe!(p::Plot, x, y, z; kwargs...)
+    surface!(p, x, y, z; kwargs...)
+    # surface plot with modifications
+    d = p.data[end]
+    d.hidesurface = true
+    d.contours.x.show = true
+    d.contours.y.show = true
+
     p
 end
 
