@@ -56,11 +56,19 @@ plot(fs::NTuple(N,Function), a, [b]; kwargs...)
 plot!([p::Plot], fs::NTuple(N,Function), a, [b]; kwargs...)
 ```
 
+Alternatively
+
+```
+plot(u::Function, v::Function, [w::Function], a, [b]; kwargs...)
+```
+
 In addition there are these plot constructors for higher-dimensional plots
 
 * `contour`
+* `implicit_plot`
 * `heatmap`
 * `surface`
+* `wireframe`
 
 There are also numerous functions to modify attributes of an existing plot.
 
@@ -79,7 +87,9 @@ include("plots-lite.jl")
 export Plot, Config # but not Preset, preset, plot
 
 export plot, plot!, scatter, scatter!
-export contour, contour!, heatmap, heatmap!, surface, surface!
+export contour, contour!, heatmap, heatmap!
+export surface, surface!, wireframe, wireframe!
+export implicit_plot, implicit_plot!
 export quiver, quiver!, arrow, arrow!
 export annotate, annotate!, title!, size!, legend!
 export xlabel!, ylabel!, xlims!, ylims!, xaxis!, yaxis!

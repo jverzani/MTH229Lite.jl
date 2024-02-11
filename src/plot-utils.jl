@@ -62,7 +62,8 @@ end
 
 
 ## -----
-import .PlotlyLightLite: plot, plot!, _new_plot
+import .PlotlyLightLite: plot, plot!, implicit_plot, implicit_plot!
+import .PlotlyLightLite: _new_plot
 
 """
     plotif(f, g, a, b)
@@ -135,3 +136,40 @@ function plot!(p::Plot, ex::SimpleExpressions.SymbolicEquation, a::Real, b::Real
     plot!(p, fr, a, b; linecolor=lcᵣ, linewidth=lwᵣ, kwargs...)
     p
 end
+
+"""
+    implicit_plot::SymbolicEquation
+
+For equation written as `F(x,y(x)) = 0` plot implicitly defined `y`.
+
+## Example
+
+Write symbolic equations explicitly using `x[1]`, `x[2]` or as in this example
+
+```
+@symbolic x
+u, v = x[1], x[2]
+eq = u * v ~ u^3 + u^2 + u + 1
+
+implicit_plot(eq)
+```
+
+Or with parameters
+
+```
+@symbolic x p
+u, v = x[1], x[2]
+c,d,e,h = (p[i] for i in 1:4)
+eq = u * v ~ c*u^3 + d*u^2 + e*u + h
+
+implicit_plot(eq(:, (1,1,1,1)))
+```
+"""
+implicit_plot(eq::SimpleExpressions.SymbolicEquation; kwargs...) =
+    implicit_plot((x,y) -> (eq.lhs-eq.rhs)([x,y]); kwargs...)
+
+implicit_plot!(eq::SimpleExpressions.SymbolicEquation; kwargs...) =
+    implicit_plot!((x,y) -> (eq.lhs-eq.rhs)([x,y]); kwargs...)
+
+implicit_plot!(p::Plot, eq::SimpleExpressions.SymbolicEquation; kwargs...) =
+    implicit_plot!(p, (x,y) -> (eq.lhs-eq.rhs)([x,y]); kwargs...)
