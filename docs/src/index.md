@@ -115,6 +115,8 @@ delete!(current().layout, :width)  # hide
 delete!(current().layout, :height) # hide
 to_documenter(current())           # hide
 ```
+
+
 ## Limits
 
 The `MTH229` package provides `lim` to illustrate limits *numerically*, as does `MTH229Lite`. For example, this makes a table of values illustrating how the (right) limit of ``f(x) = (\cos(x) - 1)/x^2`` at ``0`` is ``-1/2``:
