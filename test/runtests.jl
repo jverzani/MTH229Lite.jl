@@ -57,7 +57,7 @@ end
     p₃ = plot(eq, a, b)
     p₄ = plot(eq, I)
     p₅ = scatter([1,2, NaN,4], [1,NaN, 3,4])
-    grid_layout([p₁ p₂ p₃; p₄ p₅ Plot()], legend=false)
+    plot([p₁ p₂ p₃; p₄ p₅ Plot()], legend=false)
 
     p = plot(u, a, b)
     xlims!(p, (1,2))
