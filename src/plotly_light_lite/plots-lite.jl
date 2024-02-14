@@ -802,18 +802,19 @@ skirt!(xs, -ys, zs, f; color="blue", opacity=0.6)
 
 """
 function skirt(q, v, f::Function; kwargs...)
-    _new_plot(;kwargs...)
+    p = _new_plot(;kwargs...)
     skirt!(p, q, v, f; kwargs...)
 end
 skirt!(q, v, f::Function; kwargs...) = skirt!(current(), q, v, f; kwargs...)
 function skirt!(p::Plot, q,v,f::Function; kwargs...)
-    ts = range(0,1, length=50)
+    ts = range(0, 1, length=100)
     xs, ys, zs = unzip([q + t*v for t ∈ ts])
     skirt!(p, xs, ys, zs, f)
 end
 # xs, ys, zs are path in space
 skirt!(xs, ys, z₀s, f::Function; kwargs...) =
     skirt!(current_plot[], xs, ys, z₀s, f; kwargs...)
+
 function skirt!(p::Plot, xs, ys, z₀s, f::Function; kwargs...)
     zs = f.(xs, ys)
     # need to join xs, ys, zs to get x,y,z
