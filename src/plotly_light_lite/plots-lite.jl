@@ -118,6 +118,7 @@ function plot(; layout::Union{Nothing, Config}=nothing,
               kwargs...)
     p = _new_plot(;width, height,xlims, ylims, legend, aspect_ratio)
     plot!(p; layout, config, kwargs...)
+    p
 end
 
 
@@ -683,12 +684,43 @@ circle!(p, 2,3,-1,1; line=(color=:gray,), fillcolor=:red, opacity=0.2)
 function circle!(p::Plot, x0, x1, y0, y1; kwargs...)
     _add_shape!(p, _shape("circle", x0, x1, y0, y1; kwargs...))
 end
+circle!(x0, x1, y0, y1; kwargs...) =
+    circle!(current_plot[], x0, x1, y0, y1; kwargs...)
 
 ## ----
-# 3d shapes  use mesh3d, a type that requires care to specify indices
-# for the needed triangulation.
-# In the following we do this for *convex* polygons described by x,y,z
-function _plot_convex_polygon!(p::Plot, x, y, z; kwargs...)
+"""
+    ★(q, xs, ys, zs; kwargs...)
+    ★!([p::Plot], q, xs, ys, zs; kwargs...)
+
+A star connected region has an origin, `q`, for which each boundary point (described by `(xs, ys, zs)` is accessible by a ray for `q` which does not cross the boundary.
+
+## Example
+
+```
+pts = 5
+Δ = 2pi/pts/2
+a, A = 1, 3
+q = [0,0,0]
+ts = range(0, 2pi, length=pts+1)
+ps = [(A*[cos(t),sin(t),0], a*[cos(t+Δ), sin(t+Δ), 0]) for t in ts]
+xs, ys, zs = unzip(collect(Base.Iterators.flatten(ps)))
+★(q, xs, ys, zs)
+```
+
+"""
+function ★(q, xs, ys, zs; kwargs...)
+    p = _new_plot(; kwargs...)
+    ★!(p, q, xs, ys, zs; kwargs...)
+end
+
+★!(q, xs, ys, zs; kwargs...) =
+    ★!(current_plot[], xs, ys, zs; kwargs...)
+
+function ★!(p::Plot, q, xs, ys, zs; kwargs...)
+    x = copy(xs); pushfirst!(x, q[1])
+    y = copy(ys); pushfirst!(y, q[2])
+    z = copy(zs); pushfirst!(z, q[3])
+
     n = length(x)
     i = zeros(Int,n-1)
     j = 1:n-1
@@ -698,10 +730,50 @@ function _plot_convex_polygon!(p::Plot, x, y, z; kwargs...)
     push!(p.data, d)
     p
 end
-_plot_convex_polygon!(x, y, z; kwargs...) =
-    plot_convex_polygon!(current_plot[], x, y, z; kwargs...)
 
-# a few implementations a parallelogram and a disc
+"""
+    ziptie(xs, ys, zs, xs′, ys′, zs′; kwargs...)
+    ziptie!([p::Plot], xs, ys, zs, xs′, ys′, zs′; kwargs...)
+
+surface created by connecting points along two paths given by `(xs, ys, zs)` and `(xs′, ys′, zs′)`. All vectors must be same length. Mesh is created by zipping together points on the two curves.
+
+## Example
+
+```
+r(t) = (sin(t), cos(t), t)
+s(t) = (sin(t+pi), cos(t+pi), t)
+ts = range(0, 4pi, length=100)
+ziptie(unzip(r.(ts))..., unzip(s.(ts))...;
+       color="green", opacity=.25, showscale=false)
+```
+"""
+function ziptie(xs, ys, zs, xs′, ys′, zs′; kwargs...)
+    p = _new_plot(; kwargs...)
+    ziptie!(p, xs, ys, zs, xs′, ys′, zs′; kwargs...)
+end
+ziptie!(xs, ys, zs, xs′, ys′, zs′; kwargs...) =
+    ziptie!(current_plot[], xs, ys, zs, xs′, ys′, zs′; kwargs...)
+
+function ziptie!(p::Plot, xs, ys, zs, xs′, ys′, zs′; kwargs...)
+    # need to join xs, ys, zs to get x,y,z
+
+    x = collect(Base.Iterators.flatten(zip(xs,xs′)))
+    y = collect(Base.Iterators.flatten(zip(ys,ys′)))
+    z = collect(Base.Iterators.flatten(zip(zs,zs′)))
+
+    n = length(x)
+    iₛ = 0:2:(n-4)
+    i = collect(Base.Iterators.flatten(zip(iₛ, iₛ .+ 1)))
+    j = i .+ 1
+    k = i .+ 2
+    d = Config(; x, y, z, i, j, k, type="mesh3d", kwargs...)
+    push!(p.data, d)
+    p
+end
+
+## ----
+
+# a few implementations of shapes: a parallelogram; a disc; a "skirt"
 """
     parallelogram(q, v̄, w̄; kwargs...)
     parallelogram!([p::Plot], q, v̄, w̄; kwargs...)
@@ -716,8 +788,8 @@ parallelogram!(q, v̄, w̄; kwargs...) =
     parallelogram!(current_plot[], q, v̄, w̄; kwargs...)
 
 function parallelogram!(p::Plot, q, v̄, w̄; kwargs...)
-    xyzₛ = [q, q + v̄, q + v̄ + w̄, q + w̄]
-    _plot_convex_polygon!(p, unzip(xyzₛ)...; kwargs...)
+    xyzₛ = [q + v̄, q + v̄ + w̄, q + w̄]
+    ★!(p, q, unzip(xyzₛ)...; kwargs...)
 end
 
 """
@@ -727,6 +799,14 @@ end
 Plot circle in 3 dimensions with center at `q`, radius `r`, and perpendicular to normal vector `n̄`.
 
 # Example
+```
+q, n = [0,0,0], [0,0,1]
+circ3d(q, 3, n)
+arrow!(q, n)
+```
+
+Or a more complicated one:
+
 ```
 Z(r, θ) = 4 - r
 X(r, θ) = r * cos(θ)
@@ -743,7 +823,7 @@ parallelogram!(q, v̂, ŵ; opacity=0.5, color=:yellow)
 """
 function circ3d(q, r, n̄; kwargs...)
     p = _new_plot(;kwargs...)
-    circ3d!(p, q, n̄, r; kwargs...)
+    circ3d!(p, q, r, n̄; kwargs...)
 end
 circ3d!(q, r, n̄; kwargs...) =
     circ3d!(current_plot[], q, r, n̄; kwargs...)
@@ -768,7 +848,7 @@ function circ3d!(p::Plot, q, r, n̄; kwargs...)
 
     xyzₛ = [q + cos(t) * (r*ŵ)+ sin(t) * (r*û) for t in range(0, 2pi, length=n)]
 
-    _plot_convex_polygon!(p, unzip(xyzₛ)...; kwargs...)
+    ★!(p, q, unzip(xyzₛ)...; kwargs...)
 end
 
 """
@@ -806,30 +886,23 @@ function skirt(q, v, f::Function; kwargs...)
     skirt!(p, q, v, f; kwargs...)
 end
 skirt!(q, v, f::Function; kwargs...) = skirt!(current(), q, v, f; kwargs...)
-function skirt!(p::Plot, q,v,f::Function; kwargs...)
+function skirt!(p::Plot, q, v, f::Function; kwargs...)
     ts = range(0, 1, length=100)
     xs, ys, zs = unzip([q + t*v for t ∈ ts])
     skirt!(p, xs, ys, zs, f)
 end
+
 # xs, ys, zs are path in space
-skirt!(xs, ys, z₀s, f::Function; kwargs...) =
-    skirt!(current_plot[], xs, ys, z₀s, f; kwargs...)
+function skirt(xs, ys, zs, f::Function; kwargs...)
+    p = _new_plot()
+    skirt!(p, xs, ys, zs, f)
+end
+skirt!(xs, ys, zs, f::Function; kwargs...) =
+    skirt!(current_plot[], xs, ys, zs, f; kwargs...)
 
-function skirt!(p::Plot, xs, ys, z₀s, f::Function; kwargs...)
-    zs = f.(xs, ys)
-    # need to join xs, ys, zs to get x,y,z
-    x = collect(Base.Iterators.flatten(zip(xs,xs)))
-    y = collect(Base.Iterators.flatten(zip(ys,ys)))
-    z = collect(Base.Iterators.flatten(zip(z₀s,zs)))
-
-    n = length(x)
-    iₛ = 0:2:(n-4)
-    i = collect(Base.Iterators.flatten(zip(iₛ, iₛ .+ 1)))
-    j = i .+ 1
-    k = i .+ 2
-    d = Config(; x, y, z, i, j, k, type="mesh3d", kwargs...)
-    push!(p.data, d)
-    p
+function skirt!(p::Plot, xs, ys, zs, f::Function; kwargs...)
+    zs′ = f.(xs, ys)
+    ziptie!(p, xs, ys, zs, xs, ys, zs′; kwargs...)
 end
 
 
