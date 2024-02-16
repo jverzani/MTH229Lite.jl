@@ -319,6 +319,8 @@ end
 
 
 # special cases of plots
+_adjust_matrix(m::Matrix) = collect(eachrow(m))
+_adjust_matrix(x::Any) = x
 """
     contour(x, y, z; kwargs...)
     contour!([p::Plot], x, y, z; kwargs...)
@@ -350,6 +352,7 @@ function contour!(p::Plot, x, y, z;
                   linewidth = nothing,
                   kwargs...)
 
+    x, y, z = _adjust_matrix.((x,y,z))
     c = Config(;x,y,z,type="contour")
     c.contours = Config()
     c.line = Config()
@@ -377,7 +380,7 @@ function contour!(p::Plot, x, y, z;
 
     if !isnothing(levels) # something with a step or single number
         c.autocontour = false
-        if hasmethod(step, typeof(levels))
+        if hasmethod(step, (typeof(levels),))
             l,r = extrema(levels)
             s = step(levels)
         else
@@ -456,6 +459,7 @@ heatmap!(x, y, f::Function; kwargs...) =
 function heatmap!(p::Plot, x, y, z;
                   kwargs...)
 
+    x, y, z = _adjust_matrix.((x,y,z))
     c = Config(; x, y, z, type="heatmap")
     _merge!(c; kwargs...)
 
@@ -505,7 +509,8 @@ surface!(xs, ys, map(x -> x .+ 1, z1), colorscale="Viridis", showscale=false, op
 surface!(xs, ys, map(x -> x .- 1, z1), colorscale="Viridis", showscale=false, opacity=0.9)
 ```
 
-`Julia` users would typically use a matrix to hold the `z` data, but Javascript users would expect a vector of vectors, as above. As `PlotlyLight` just passes on the data to Javascript, the above is perfectly acceptable.
+`Julia` users would typically use a matrix to hold the `z` data, but Javascript users would expect a vector of vectors, as above. As `PlotlyLight` just passes on the data to Javascript, the above is perfectly acceptable. Indeed `PlotlyLightLite` converts matrices to this format in such plots.
+
 (The keyword arguments above come from `Plotly`, not `Plots`.)
 
 A parameterized surface can be displayed. Below the `unzip` function returns 3 matrices specifying the surface described by the vector-valued function `r`.
@@ -566,8 +571,10 @@ function surface!(p::Plot, x, y, z;
                   center = nothing,
                   up = nothing,
                   zcontour = false,
+                  aspect_ratio=nothing,
                   kwargs...)
 
+    x, y, z = _adjust_matrix.((x,y,z))
     c = Config(;x,y,z,type="surface")
     _merge!(c; kwargs...)
 
@@ -579,6 +586,13 @@ function surface!(p::Plot, x, y, z;
 
     # camera controls
     _camera_position!(p.layout.scene.camera; center, up, eye)
+
+    if !isnothing(aspect_ratio)
+        if aspect_ratio == :equal
+            p.layout.scene.aspectmode = "data"
+            p.layout.scene.aspectratio = Config(x=1, y=1, z=1)
+        end
+    end
 
     push!(p.data, c)
     p
@@ -853,8 +867,8 @@ end
 
 """
     skirt(q, v, f::Function; kwargs...)
-    skirt!([p::Plot], q, v, f::Function;
-    skirt!([p::Plot], xs, ys, zs, f::Function;
+    skirt!([p::Plot], q, v, f::Function; kwargs...)
+    skirt!([p::Plot], xs, ys, zs, f::Function; kwargs...)
 
 Along a path `(xs, ys, zs)` plot a skirt between the path and `(xs, ys, f(xs, ys))`. The case of a path described by a vector, `v`, anchored at a point `q` has a special method.
 
@@ -889,7 +903,7 @@ skirt!(q, v, f::Function; kwargs...) = skirt!(current(), q, v, f; kwargs...)
 function skirt!(p::Plot, q, v, f::Function; kwargs...)
     ts = range(0, 1, length=100)
     xs, ys, zs = unzip([q + t*v for t ∈ ts])
-    skirt!(p, xs, ys, zs, f)
+    skirt!(p, xs, ys, zs, f; kwargs...)
 end
 
 # xs, ys, zs are path in space
@@ -1119,6 +1133,9 @@ end
 
 """
     title!([p::Plot], txt)
+    xlabel!([p::Plot], txt)
+    ylable!([p::Plot], txt)
+    zlabel!([p::Plot], txt)
 
 Set plot title.
 """
@@ -1134,9 +1151,13 @@ xlabel!(txt) = xlabel!(current_plot[], txt)
 ylabel!(p::Plot, txt) = (p.layout.yaxis.title=txt;p)
 ylabel!(txt) = ylabel!(current_plot[], txt)
 
+zlabel!(p::Plot, txt) = (p.layout.zaxis.title=txt;p)
+zlabel!(txt) = zlabel!(current_plot[], txt)
+
 """
-    xticks!([p::Plot]; kwargs...)
-    yticks!([p::Plot]; kwargs...)
+    xaxis!([p::Plot]; kwargs...)
+    yaxis!([p::Plot]; kwargs...)
+    zaxis!([p::Plot]; kwargs...)
 
 Adjust ticks on chart.
 * ticks: a container or range
@@ -1147,6 +1168,8 @@ xaxis!(p::Plot; kwargs...) = (_merge!(p.layout.xaxis, _axis(;kwargs...)); p)
 xaxis!(;kwargs...) = xaxis!(current_plot[]; kwargs...)
 yaxis!(p::Plot; kwargs...) = (_merge!(p.layout.yaxis, _axis(;kwargs...)); p)
 yaxis!(;kwargs...) = yaxis!(current_plot[]; kwargs...)
+zaxis!(p::Plot; kwargs...) = (_merge!(p.layout.zaxis, _axis(;kwargs...)); p)
+zaxis!(;kwargs...) = zaxis!(current_plot[]; kwargs...)
 # https://plotly.com/javascript/tick-formatting/ .. more to do
 function _axis(;ticks=nothing, ticktext=nothing, showticklabels=nothing,
                autotick=nothing, showgrid=nothing, zeroline=nothing,
@@ -1192,6 +1215,14 @@ function ylims!(p::Plot, lims)
 end
 ylims!(p::Plot, ::Nothing) = p
 ylims!(lims) = ylims!(current_plot[], lims)
+
+"`zlims!(p, lims)` set `z` limits of plot"
+function zlims!(p::Plot, lims)
+    p.layout.xaxis.range = lims
+    p
+end
+zlims!(p::Plot, ::Nothing) = p
+zlims!(lims) = zlims!(current_plot[], lims)
 
 "`scrollzoom!([p], x::Bool)` turn on/off scrolling to zoom"
 scroll_zoom!(p::Plot,x::Bool) = p.config.scrollZoom = x
