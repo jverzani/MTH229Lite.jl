@@ -50,6 +50,19 @@ function Base.extrema(p::Plot)
     (x = (mx, Mx), y = (my, My), z = (mz, Mz))
 end
 
+struct Recycler{T}
+    itr::T
+    n::Int
+end
+Recycler(x) =  Recycler(x, length(x))
+Recycler(::Nothing) =  Recycler([nothing],1)
+
+function Base.getindex(R::Recycler, i::Int)
+    q, r = divrem(i, R.n)
+    idx = iszero(r) ? R.n : r
+    R.itr[idx]
+end
+
 
 include("SplitApplyCombine_invert.jl")
 

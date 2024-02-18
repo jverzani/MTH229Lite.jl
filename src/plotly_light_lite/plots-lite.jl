@@ -103,6 +103,8 @@ end
 
 # ab is some interval specification via `extrema`
 plot(f::Function, ab; kwargs...) = plot(f, extrema(ab)...; kwargs...)
+# default
+plot(f::Function; kwargs...) = plot(f, -5, 5; kwargs...)
 
 """
     plot(; layout::Config?, config::Config?, kwargs...)
@@ -208,12 +210,27 @@ plot!(f::Function, args...; kwargs...) =  plot!(current_plot[], f, args...; kwar
 
 # convenience to make multiple plots by passing in vector
 # using plot! allows line customizations...
+plot(fs::Vector{<:Function}; kwargs...) = plot(fs, -5,5; kwargs...)
 plot(fs::Vector{<:Function}, ab; kwargs...) = plot(fs, extrema(ab)...; kwargs...)
-function plot(fs::Vector{<:Function}, a, b; kwargs...)
+function plot(fs::Vector{<:Function}, a, b;
+              linecolor = nothing, # string, symbol, RGB?
+              linewidth = nothing, # pixels
+              linestyle = nothing, # solid, dot, dashdot,
+              lineshape = nothing,
+              kwargs...)
     u, vs... = fs
-    p = plot(u, a, b; kwargs...)
-    for v ∈ vs
-        plot!(p, v, a, b)
+
+    lc, lw, ls, lsh = Recycler.((linecolor, linewidth, linestyle, lineshape))
+    p = plot(u, a, b;
+             linecolor=lc[1], linewidth=lw[1],
+             linesstyle=ls[1], lineshape=lsh[1],
+             kwargs...)
+    for (i,v) ∈ enumerate(vs)
+        plot!(p, v, a, b;
+              linecolor=lc[i], linewidth=lw[i],
+              linesstyle=ls[i], lineshape=lsh[i],
+              kwargs...
+              )
     end
     p
 end
@@ -834,6 +851,7 @@ r = 2
 circ3d!(q, r, n; color="black", opacity=0.75)
 q, v̂, ŵ = [0,0,0], [0,4,0], [0,0,4]
 parallelogram!(q, v̂, ŵ; opacity=0.5, color=:yellow)
+```
 """
 function circ3d(q, r, n̄; kwargs...)
     p = _new_plot(;kwargs...)
