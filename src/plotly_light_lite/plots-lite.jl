@@ -213,6 +213,7 @@ plot!(f::Function, args...; kwargs...) =  plot!(current_plot[], f, args...; kwar
 plot(fs::Vector{<:Function}; kwargs...) = plot(fs, -5,5; kwargs...)
 plot(fs::Vector{<:Function}, ab; kwargs...) = plot(fs, extrema(ab)...; kwargs...)
 function plot(fs::Vector{<:Function}, a, b;
+              label = nothing,
               linecolor = nothing, # string, symbol, RGB?
               linewidth = nothing, # pixels
               linestyle = nothing, # solid, dot, dashdot,
@@ -220,13 +221,17 @@ function plot(fs::Vector{<:Function}, a, b;
               kwargs...)
     u, vs... = fs
 
+    la = Recycler(label)
     lc, lw, ls, lsh = Recycler.((linecolor, linewidth, linestyle, lineshape))
     p = plot(u, a, b;
+             label=la[1],
              linecolor=lc[1], linewidth=lw[1],
              linesstyle=ls[1], lineshape=lsh[1],
              kwargs...)
-    for (i,v) ∈ enumerate(vs)
+    for (j,v) ∈ enumerate(vs)
+        i = j + 1
         plot!(p, v, a, b;
+              label=la[i],
               linecolor=lc[i], linewidth=lw[i],
               linesstyle=ls[i], lineshape=lsh[i],
               kwargs...
