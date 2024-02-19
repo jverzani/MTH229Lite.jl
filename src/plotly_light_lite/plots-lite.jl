@@ -193,6 +193,11 @@ end
 
 function plot!(p::Plot, f::Function, a, b; kwargs...)
     x, y = unzip(f, a, b)
+
+    # trim if slope > 10_000
+    CUT_OFF = 10_000
+    y[findall(>(CUT_OFF), abs.([(y[i+1]-y[i])/(x[i+1]-x[i]) for i in 1:length(x)-1]))] .= NaN
+
     plot!(p, x, y; kwargs...)
 end
 
