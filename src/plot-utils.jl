@@ -94,7 +94,7 @@ plotif(f, g, I::Interval; kwargs...) = plotif(f, g, I...; kwargs...)
     plot(eqn::SymbolicEquation, a::Real, b::Real; kwargs...)
     plot(eqn::SymbolicEquation, ab::Interval; kwargs...)
 
-Plot equation by plotting both left-hand side and right-hand side over the specified interval. Argument `linecolor` and `linewidth` may specify two distinct values.
+Plot equation by plotting both left-hand side and right-hand side over the specified interval. Arguments `label`, `linecolor` and `linewidth` may specify two distinct values.
 
 # Example
 ```julia
@@ -110,33 +110,14 @@ scatter!(xs, u.(xs); markercolor="black")
 ```
 """
 function plot(ex::SimpleExpressions.SymbolicEquation, a::Real, b::Real; kwargs...)
-    p = _new_plot(; kwargs...)
-    plot!(p, ex, a, b; kwargs...)
-
+    plot([ex.lhs, ex.rhs], a, b; kwargs...)
 end
 
-plot(f::SimpleExpressions.SymbolicEquation, I::Interval; kwargs...) = plot(f, I.a, I.b; kwargs...)
+plot(f::SimpleExpressions.SymbolicEquation, I::Interval; kwargs...) =
+    plot(f, I.a, I.b; kwargs...)
+plot(f::SimpleExpressions.SymbolicEquation; kwargs...) = plot(f, -5, 5; kwargs...)
 
-
-function plot!(p::Plot, ex::SimpleExpressions.SymbolicEquation, a::Real, b::Real; linecolor=nothing, linewidth=nothing, kwargs...)
-    lhs, rhs = ex.lhs, ex.rhs
-    fl = SimpleExpressions.issymbolic(lhs) ? lhs : ((x) -> lhs)
-    fr = SimpleExpressions.issymbolic(rhs) ? rhs : ((x) -> rhs)
-
-    lcₗ, lcᵣ = (isa(linecolor, Vector) || isa(linecolor, Tuple)) ?
-        (first(linecolor), last(linecolor)) :
-         (linecolor, linecolor)
-
-    lwₗ, lwᵣ = isnothing(linewidth) ?
-        (nothing, nothing) :
-        (first(linewidth), last(linewidth))
-
-
-    plot!(p, fl, a, b; linecolor=lcₗ, linewidth=lwₗ, kwargs...)
-    plot!(p, fr, a, b; linecolor=lcᵣ, linewidth=lwᵣ, kwargs...)
-    p
-end
-
+# no plot! method as we don't have plot!([f,g]) method
 """
     implicit_plot::SymbolicEquation
 
