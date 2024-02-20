@@ -189,8 +189,6 @@ function plot!(p::Plot, x; type=nothing, mode=nothing, kwargs...)
     p
 end
 
-
-
 function plot!(p::Plot, f::Function, a, b; kwargs...)
     x, y = unzip(f, a, b)
     plot!(p, x, y; kwargs...)

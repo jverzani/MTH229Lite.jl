@@ -63,7 +63,9 @@ function Base.getindex(R::Recycler, i::Int)
     R.itr[idx]
 end
 
-
+## -----
+# what is a good heuristic to identify vertical lines?
+## -----
 include("SplitApplyCombine_invert.jl")
 
 """
