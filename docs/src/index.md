@@ -191,7 +191,7 @@ Solving ``f(x) = g(x)`` is done by solving the related function `h(x) = f(x) - g
 
 ### Symbolic equations
 
-The `SimpleExpressions` package provides a  means to specify a symbolic equation with the `~` operator  (`=` is assignment, `==` is for relaxed comparison (e.g. ignoring type), `===` is for identical testing). This notation is used by `SymPy` and was borrowed from `Symbolics`.
+The `SimpleExpressions` package provides a  means to specify a symbolic equation with the `~` operator  (`=` is assignment, `==` is for relaxed comparison -- e.g. ignoring type, `===` is for identical testing). This notation is used by `SymPy` and was borrowed from `Symbolics`.
 
 The `plot` generic has a method for symbolic equations which plots *both* functions over the interval.
 
@@ -199,7 +199,7 @@ The  `solve` generic has these variants for such symbolic equations
 
 * `solve(eqn, a)` uses the hybrid secant method starting at a
 * `solve(eqn, (a,b))` uses a bisection method for a bracketing interval
-* `solve(eqn, I)`, **where** `I` is an interval, uses `find_zeros` to scan for all zeros.
+* `solve(eqn, I)`, **where** `I=a..b` is of internal type `Interval`, uses `find_zeros` to scan for all zeros.
 * `solve(eqn)` attempts to solve the symbolic equation by applying inverse functions. It can also solve polynomials using their roots.
 
 This example illustrates using `scatter!` to add a few points (see the more on plotting section):
