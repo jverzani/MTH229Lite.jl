@@ -32,6 +32,11 @@ function is_polynomial(u::AbstractSymbolic)
 end
 
 # return solutions as vector
+as_symbolic(a) = issymbolic(a) ? a : SymbolicNumber(a)
+_sqrt(x::Real) = x < 0 ? sqrt(abs(x))*im : sqrt(x)
+_sqrt(x) = sqrt(x)
+_cbrt(x::Real) = x < 0 ? -cbrt(abs(x)) : cbrt(x)
+_cbrt(x) = x^(1/3)
 function solve_polynomial(p::AbstractSymbolic)
     cs = polynomial_coeffs(p)
     d = length(cs) - 1
@@ -39,16 +44,21 @@ function solve_polynomial(p::AbstractSymbolic)
     if d == 2
         c, b, a = cs
         Δ = b^2 - 4*a*c
-        Δ = issymbolic(Δ) ? Δ : SymbolicNumber(Δ)
         return (-b .+ [sqrt(Δ), -sqrt(Δ)]) ./ (2a)
     end
-    if d == 3
-        ps₀, ps₁, ps₂, ps₃ = cs
-        u1 = -ps₂/(3*ps₃) - (-3*ps₁/ps₃ + ps₂^2/ps₃^2)/(3*cbrt(27*ps₀/(2*ps₃) - 9*ps₁*ps₂/(2*ps₃^2) + ps₂^3/ps₃^3 + sqrt(-4*(-3*ps₁/ps₃ + ps₂^2/ps₃^2)^3 + (27*ps₀/ps₃ - 9*ps₁*ps₂/ps₃^2 + 2*ps₂^3/ps₃^3)^2)/2)) - cbrt(27*ps₀/(2*ps₃) - 9*ps₁*ps₂/(2*ps₃^2) + ps₂^3/ps₃^3 + sqrt(-4*(-3*ps₁/ps₃ + ps₂^2/ps₃^2)^3 + (27*ps₀/ps₃ - 9*ps₁*ps₂/ps₃^2 + 2*ps₂^3/ps₃^3)^2)/2)/3
-        u2 = -ps₂/(3*ps₃) - (-3*ps₁/ps₃ + ps₂^2/ps₃^2)/(3*(-1/2 - sqrt(3)*I/2)*cbrt(27*ps₀/(2*ps₃) - 9*ps₁*ps₂/(2*ps₃^2) + ps₂^3/ps₃^3 + sqrt(-4*(-3*ps₁/ps₃ + ps₂^2/ps₃^2)^3 + (27*ps₀/ps₃ - 9*ps₁*ps₂/ps₃^2 + 2*ps₂^3/ps₃^3)^2)/2)) - (-1/2 - sqrt(3)*I/2)*cbrt(27*ps₀/(2*ps₃) - 9*ps₁*ps₂/(2*ps₃^2) + ps₂^3/ps₃^3 + sqrt(-4*(-3*ps₁/ps₃ + ps₂^2/ps₃^2)^3 + (27*ps₀/ps₃ - 9*ps₁*ps₂/ps₃^2 + 2*ps₂^3/ps₃^3)^2)/2)/3
-        u3 = -ps₂/(3*ps₃) - (-3*ps₁/ps₃ + ps₂^2/ps₃^2)/(3*(-1/2 + sqrt(3)*I/2)*cbrt(27*ps₀/(2*ps₃) - 9*ps₁*ps₂/(2*ps₃^2) + ps₂^3/ps₃^3 + sqrt(-4*(-3*ps₁/ps₃ + ps₂^2/ps₃^2)^3 + (27*ps₀/ps₃ - 9*ps₁*ps₂/ps₃^2 + 2*ps₂^3/ps₃^3)^2)/2)) - (-1/2 + sqrt(3)*I/2)*cbrt(27*ps₀/(2*ps₃) - 9*ps₁*ps₂/(2*ps₃^2) + ps₂^3/ps₃^3 + sqrt(-4*(-3*ps₁/ps₃ + ps₂^2/ps₃^2)^3 + (27*ps₀/ps₃ - 9*ps₁*ps₂/ps₃^2 + 2*ps₂^3/ps₃^3)^2)/2)/3
-        return [u1, u2, u3]
-    end
+    # if d == 3
+    #     ps₀, ps₁, ps₂, ps₃ = cs
+    #     u1 = -ps₂/(3*ps₃) - (-3*ps₁/ps₃ + ps₂^2/ps₃^2)/(3*_cbrt(27*ps₀/(2*ps₃) - 9*ps₁*ps₂/(2*ps₃^2) + ps₂^3/ps₃^3 + _sqrt(-4*(-3*ps₁/ps₃ + ps₂^2/ps₃^2)^3 + (27*ps₀/ps₃ - 9*ps₁*ps₂/ps₃^2 + 2*ps₂^3/ps₃^3)^2)/2)) - _cbrt(27*ps₀/(2*ps₃) - 9*ps₁*ps₂/(2*ps₃^2) + ps₂^3/ps₃^3 + _sqrt(-4*(-3*ps₁/ps₃ + ps₂^2/ps₃^2)^3 + (27*ps₀/ps₃ - 9*ps₁*ps₂/ps₃^2 + 2*ps₂^3/ps₃^3)^2)/2)/3
+    #     u2 = -ps₂/(3*ps₃) - (-3*ps₁/ps₃ + ps₂^2/ps₃^2)/(3*(-1/2 - sqrt(3)*im/2)*_cbrt(27*ps₀/(2*ps₃) - 9*ps₁*ps₂/(2*ps₃^2) + ps₂^3/ps₃^3 + _sqrt(-4*(-3*ps₁/ps₃ + ps₂^2/ps₃^2)^3 + (27*ps₀/ps₃ - 9*ps₁*ps₂/ps₃^2 + 2*ps₂^3/ps₃^3)^2)/2)) - (-1/2 - _sqrt(3)*im/2)*_cbrt(27*ps₀/(2*ps₃) - 9*ps₁*ps₂/(2*ps₃^2) + ps₂^3/ps₃^3 + _sqrt(-4*(-3*ps₁/ps₃ + ps₂^2/ps₃^2)^3 + (27*ps₀/ps₃ - 9*ps₁*ps₂/ps₃^2 + 2*ps₂^3/ps₃^3)^2)/2)/3
+    #     u3 = -ps₂/(3*ps₃) - (-3*ps₁/ps₃ + ps₂^2/ps₃^2)/(3*(-1/2 + _sqrt(3)*im/2)*_cbrt(27*ps₀/(2*ps₃) - 9*ps₁*ps₂/(2*ps₃^2) + ps₂^3/ps₃^3 + _sqrt(-4*(-3*ps₁/ps₃ + ps₂^2/ps₃^2)^3 + (27*ps₀/ps₃ - 9*ps₁*ps₂/ps₃^2 + 2*ps₂^3/ps₃^3)^2)/2)) - (-1/2 + _sqrt(3)*im/2)*_cbrt(27*ps₀/(2*ps₃) - 9*ps₁*ps₂/(2*ps₃^2) + ps₂^3/ps₃^3 + _sqrt(-4*(-3*ps₁/ps₃ + ps₂^2/ps₃^2)^3 + (27*ps₀/ps₃ - 9*ps₁*ps₂/ps₃^2 + 2*ps₂^3/ps₃^3)^2)/2)/3
+
+    #     # polish?
+    #     u1 -= p(u1)/p'(u1)
+    #     u2 -= p(u2)/p'(u2)
+    #     u3 -= p(u3)/p'(u3)
+
+    #     return [u1, u2, u3]
+    # end
     # d ≥ 4 use roots approach
     comp = companion(collect(Float64, cs))
     return eigvals(comp)

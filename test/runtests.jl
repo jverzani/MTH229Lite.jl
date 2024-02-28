@@ -94,13 +94,14 @@ end
     # polynomials of degree 2 or more are different; they return vectors
     eqn = x^2 - x ~ 1
     a,b = solve(eqn)
-    @test a() == (1 + sqrt(5))/2
-    @test b() == (1 - sqrt(5))/2
+    @test a == (1 + sqrt(5))/2
+    @test b == (1 - sqrt(5))/2
 
     # quadratics may have parameters
     eqn = x^2 - x ~ p
     a,b = solve(eqn)
     @test a(:,1) == (1 + sqrt(5))/2
+
 
     # higher order are just numbers
     us = solve(x^5 - x ~ 1)
