@@ -35,8 +35,7 @@ x ~ asin((sin(p[1]) / p[2]) * p[3])
 
 Some expressions hold symbolic numbers, such as the first example. The numeric value of the resulting equation `u` can be found through `u.rhs()`.
 
-Polynomial expressions of degree 2 or more are handled differently, with return values. The quadratic and cubic formulas allow parameters to be used for 2nd and 3rd degree polynomials.
-
+Solving a quadratic or higher polynomial returns a vector of all roots.
 
 """
 function Roots.CommonSolve.solve(ex::SymbolicEquation)

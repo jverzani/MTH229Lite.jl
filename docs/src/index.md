@@ -187,9 +187,9 @@ The `plot` generic has a method for symbolic equations which plots *both* functi
 
 The  `solve` generic has these variants for such symbolic equations
 
-* `solve(eqn, a)` uses the hybrid secant method starting at a
-* `solve(eqn, (a,b))` uses a bisection method for a bracketing interval
-* `solve(eqn, I)`, **where** `I` is an interval, uses `find_zeros` to scan for all zeros.
+* `solve(eqn, a)` uses the hybrid secant method starting at `a`, where `a` is a *good* initial guess
+* `solve(eqn, (a,b))` uses a bisection method for a bracketing interval, `(a,b)`, of any length
+* `solve(eqn, I)`, **where** `I` is an interval (`a..b`), uses `find_zeros` to scan for all zeros.
 * `solve(eqn)` attempts to solve the symbolic equation by applying inverse functions. It can also solve polynomials using their roots.
 
 This example illustrates using `scatter!` to add a few points (see the more on plotting section):
@@ -326,7 +326,7 @@ plot(𝑉, I)            # near 4
 
 As with `MTH229`, a `riemann` function is provided for approximating definite integrals with  simple `Riemann` sums along with the trapezoid and Simpson's methods. The `quadgk` function from the `QuadGK` package is also imported for a more accurate and performant alternative. The `integrate` function from `SymPy` is not available -- only numeric integrals are.
 
-For example, consider a volume of revolution for a simple [pint glass](https://www.dimensions.com/element/american-pint-glass). Rounding, we have a height of ``15``cm, a width at the top of ``8``cm and at the bottom of ``6``cm. Viewed mathematically, it is volume of revolution of the function ``r(h)=3 + (4-3)/(15-0)\cdot h``. This doesn't account for the thickness of the walls or the base, which can vary to give more heft at the cost of volume.
+For example, consider a volume of revolution for a simple [pint glass](https://www.dimensions.com/element/american-pint-glass). We have a glass with straight sides, a height of ``15``cm, and a width at the top of ``8``cm and at the bottom of ``6``cm. Viewed mathematically, it is volume of revolution of the function ``r(h)=3 + (4-3)/(15-0)\cdot h``. This doesn't account for the thickness of the walls or the base, which can vary to give more heft at the cost of volume.
 
 We can answer a few questions:
 
