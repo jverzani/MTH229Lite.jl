@@ -12,12 +12,15 @@ function _merge!(c::Config, d::Config)
     end
 end
 
-
 function _join!(xs, delim="")
     xs′ = filter(!isnothing, xs)
     isempty(xs′) && return nothing
     join(string.(xs′), delim)
 end
+
+# helper
+_adjust_matrix(m::Matrix) = collect(eachrow(m))
+_adjust_matrix(x::Any) = x
 
 # from some.jl
 _something() = nothing
@@ -47,7 +50,10 @@ function Base.extrema(p::Plot)
         end
 
     end
-    (x = (mx, Mx), y = (my, My), z = (mz, Mz))
+    x = isempty(p.layout.xaxis.range) ? (mx,Mx) : p.layout.xaxis.range
+    y = isempty(p.layout.yaxis.range) ? (my,My) : p.layout.yaxis.range
+    z = isempty(p.layout.zaxis.range) ? (mz,Mz) : p.layout.zaxis.range
+    (; x, y, z)
 end
 
 struct Recycler{T}
@@ -84,6 +90,7 @@ The function version with `F` computes `F(a', b)` and then unzips. This is used 
 This uses the `invert` function of `SplitApplyCombine`.
 """
 unzip(vs) = invert(vs) # use SplitApplyCombine.invert (copied below)
+unzip(vs::Base.Iterators.Zip) = vs.is
 #unzip(v,vs...) = unzip([v, vs...])
 unzip(r::Function, a, b, n) = unzip(r.(range(a, stop=b, length=n)))
 # return (xs, f.(xs)) or (f₁(xs), f₂(xs), ...)
