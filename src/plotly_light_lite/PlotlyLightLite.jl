@@ -83,6 +83,15 @@ using PlotUtils
 
 include("utils.jl")
 include("plots-lite.jl")
+include("plot.jl")
+include("scatter.jl")
+include("surface.jl")
+include("2d-plots.jl")
+include("shapes.jl")
+include("3d-shapes.jl")
+include("annotate.jl")
+include("arrows.jl")
+include("layout.jl")
 
 export Plot, Config # but not Preset, preset, plot
 
@@ -98,6 +107,7 @@ export ★, ★!, ziptie, ziptie!
 export parallelogram, parallelogram!, circ3d, circ3d!, skirt, skirt!
 export current
 
+export arrows, arrows!, poly, poly!, band, band!, hspan!, vspan!, ablines!
 export unzip
 
 end

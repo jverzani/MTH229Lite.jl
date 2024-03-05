@@ -99,8 +99,20 @@ end
 "`fisheye(f)` changes domain of function `f` to `(-pi/2, pi/2)`"
 fisheye(f)=x->atan(f(tan(x)))
 
-"`rangeclamp(f, [hi], [lo]; replacement)` returns f function which has the value of `replacement` when `lo <= f(x) <= hi` doesn't hold."
-rangeclamp(f, hi=20, lo=-hi; replacement=NaN) = x -> lo < f(x) < hi ? f(x) : replacement
+"""
+    rangeclamp(f, [hi::Real]=20, [lo::Real=-hi]; replacement=NaN)
+    rangeclamps(f, ab; replacement=NaN)
+
+Convenience for plotting a function with large values.
+
+Returns f function which has the value of `replacement` when `lo <= f(x) <= hi` doesn't hold. If `ab` is a container, then `hi = maximum(ab)` and `lo=minimum(ab)`.
+
+"""
+rangeclamp(f, hi::Real=20, lo::Real=-hi; replacement=NaN) = x -> lo < f(x) < hi ? f(x) : replacement
+function rangeclamp(f, xs; replacement=NaN)
+    a,b = extrema(xs)
+    rangeclamp(f, b, a; replacement)
+end
 
 "`newton(f, x)` easy to use Newton's method; derivative computed using `f'`"
 newton(f, x; kwargs...) = find_zero((f, f'), x, Roots.Newton(); kwargs...)
