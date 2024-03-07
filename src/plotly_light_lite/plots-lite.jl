@@ -154,19 +154,19 @@ function _linestyle!(cfg::Config;
                      linestyle = nothing, # solid, dot, dashdot,
                      lineshape = nothing,
                      kwargs...)
-    _merge!(cfg.line; color=linecolor, width=linewidth, dash=linestyle,
+    _merge!(cfg; color=linecolor, width=linewidth, dash=linestyle,
             shape=lineshape)
-    _merge!(cfg; kwargs...)
+    kwargs
 end
 
 
-function _markerstyle!(cfg::Config;
+function _markerstyle!(cfg::Config; # .marker
                        markershape = nothing,
                        markersize  = nothing,
                        markercolor = nothing,
                        kwargs...)
-    _merge!(cfg.marker; symbol=markershape, size=markersize, color=markercolor)
-    _merge!(cfg; kwargs...)
+    _merge!(cfg; symbol=markershape, size=markersize, color=markercolor)
+    kwargs
 end
 
 function _textstyle!(cfg::Config;
@@ -175,10 +175,25 @@ function _textstyle!(cfg::Config;
                      pointsize = nothing,
                      rotation  = nothing,
                      kwargs...)
-    _merge!(cfg.textfont, color=color, family=family, size=pointsize,
+    _merge!(cfg, # textftont
+            color=color,
+            family=family,
+            size=pointsize,
             textangle=rotation)
-    _merge!(cfg; kwargs...)
+    kwargs
 end
+
+# for filled shapes
+# XXX test this! clean up code calling style! functions (kwargs)
+# XXX image
+function _fillstyle!(cfg::Config;
+                     fillcolor = nothing, # string, symbol, RGB?
+                     opacity = nothing,
+                     kwargs...)
+    _merge!(cfg; fillcolor=fillcolor, opacity)
+    kwargs
+end
+
 
 # The camera position and direction is determined by three vectors: up, center, eye.
 #
@@ -193,8 +208,9 @@ end
 function _camera_position!(camera::Config;
                           center,
                           up,
-                          eye)
+                          eye, kwargs...)
     _merge!(camera; center)
     _merge!(camera; up)
     _merge!(camera; eye)
+    kwargs
 end

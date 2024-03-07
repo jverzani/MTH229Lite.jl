@@ -1,6 +1,8 @@
 """
     scatter(x, y, [z]; [markershape], [markercolor], [markersize], kwargs...)
+    scatter(pts; kwargs...)
     scatter!([p::Plot], x, y, [z]; kwargs...)
+    scatter!([p::Plot], pts; kwargs...)
 
 Place point on a plot.
 * `markershape`: shape, e.g. "diamond" or "diamond-open"
@@ -15,8 +17,8 @@ function scatter!(p::Plot, x, y; kwargs...)
     idx = intersect(keep_x, keep_y)
 
     cfg = Config(;x=x[idx], y=y[idx], mode="markers", type="scatter")
-    _markerstyle!(cfg; kwargs...)
-
+    kws = _markerstyle!(cfg.marker; kwargs...)
+    _merge!(cfg; kws...)
     push!(p.data, cfg)
 
     p
@@ -34,8 +36,8 @@ function scatter!(p::Plot, x, y, z;
 
     cfg = Config(;x=x[idx], y=y[idx], z=z[idx],
                  mode="markers", type="scatter3d")
-    _markerstyle!(cfg; kwargs...)
-
+    kws = _markerstyle!(cfg.marker; kwargs...)
+    _merge!(cfg; kws...)
     push!(p.data, cfg)
 
     p
@@ -44,9 +46,13 @@ end
 scatter!(x, y; kwargs...) = scatter!(current_plot[], x, y; kwargs...)
 
 "`scatter(x, y; kwargs...)` see [`scatter!`](@ref)"
-function scatter(x, ys...; kwargs...)
+function scatter(x, y, zs...; kwargs...)
     p = _new_plot(; kwargs...)
 
-    scatter!(p, x, ys...; kwargs...)
+    scatter!(p, x, y, zs...; kwargs...)
     p
 end
+
+scatter(pts; kwargs...) = scatter(unzip(pts)...; kwargs...)
+scatter!(pts; kwargs...) = scatter!(current_plot[], pts; kwargs...)
+scatter!(p::Plot, pts; kwargs...) = scatter!(p, unzip(pts)...; kwargs...)

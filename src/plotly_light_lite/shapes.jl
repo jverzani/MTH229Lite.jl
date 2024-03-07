@@ -3,22 +3,14 @@
 # fillcolor
 # line.color
 function _shape(type, x0, x1, y0, y1;
-                linecolor = nothing,
-                linewidth = nothing,
-                linestyle = nothing,
                 kwargs...)
 
 
 
     c = Config(; type, x0, x1, y0, y1)
-    _merge!(c; kwargs...)
-
-    line = Config()
-    !isnothing(linecolor) && (line.color = linecolor)
-    !isnothing(linewidth) && (line.width = linewidth)
-    !isnothing(linestyle) && (line.style = linestyle)
-
-    !isnothing(line) && (c.line = line)
+    kws = _linestyle!(c.line; kwargs...)
+    kws = _fillstyle!(c; kws...)
+    _merge!(c; kws...)
     c
 end
 
@@ -102,29 +94,26 @@ Draw line `y = a + bx` over current viewing window, as determined by
 """
 ablines!(intercept, slope; kwargs...) = ablines!(current_plot[], intercept, slope; kwargs...)
 function ablines!(p::Plot, intercept, slope;
-                  linecolor=nothing, linewidth=nothing,
-                  linestyle=nothing,
                   kwargs...)
     xa, xb = extrema(p).x
     ya, yb = extrema(p).y
 
-    _line = (a, b, linecolor, linewidth, linestyle) -> begin
+    _line = (a, b) -> begin
         if iszero(b)
-            return _shape("line", xa, xb, a, a;
-                          mode = "line",
-                          linecolor, linewidth, linestyle, kwargs...)
+            return  _shape("line", xa, xb, a, a;
+                         mode = "line", kwargs...)
         end
         # line is a + bx in region [xa, xb] × [ya, yb]
         l = x -> a + b * x
         x0 = l(xa) >= ya ? xa : (ya - a)/b
         x1 = l(xb) <= yb ? xb : (yb - a)/b
         y0, y1 = extrema((l(x0), l(x1)))
-        _shape("line", x0, x1, y0, y1;
-               mode="line",
-               linecolor, linewidth, linestyle, kwargs...)
+        return _shape("line", x0, x1, y0, y1;
+                      mode="line", kwargs...)
+
     end
 
-    _add_shapes!(p, _line.(intercept, slope, linecolor, linewidth, linestyle))
+    _add_shapes!(p, _line.(intercept, slope))
     p
 end
 
@@ -210,10 +199,6 @@ function poly(points; kwargs...)
 end
 poly!(points; kwargs...) = poly!(current_plot[], points; kwargs...)
 function poly!(p::Plot,points;
-               linecolor=nothing,
-               linewidth=nothing,
-               linestyle=nothing,
-               lineshape=nothing,
                color = nothing,
                kwargs...)
     x,y = unzip(points)
@@ -222,8 +207,10 @@ function poly!(p::Plot,points;
         push!(x, first(x))
         push!(y, first(y))
     end
-    cfg = Config(;x,y,type="line", color=color, fill="toself", kwargs...)
-    _linestyle!(cfg; linecolor, linewidth, linestyle, lineshape)
+    cfg = Config(;x,y,type="line", color=color, fill="toself")
+    kws = _linestyle!(cfg.line; kwargs...)
+    kws = _fillstyle!(cfg; kws...)
+    _merge!(cfg; kws...)
     push!(p.data, cfg)
     p
 end
@@ -301,22 +288,62 @@ end
 
 # method for 2d band
 function band!(p::Plot, ::Val{2}, lower, upper;
-               fillcolor=nothing,
-               linewidth=nothing,
-               linecolor=:black,
-               linestyle=nothing,
                kwargs...)
 
-    line=Config()
-    !isnothing(linecolor) && (line.color = linecolor)
-    !isnothing(linewidth) && (line.width = linewidth)
-    !isnothing(linestyle) && (line.style = linestyle)
-
     x,y = unzip(lower)
-    l1 = Config(;x,y, line, kwargs...)
+    l1 = Config(;x,y)
+    _linestyle!(l1.line; kwargs...)
+
     x,y = unzip(upper)
     fill = "tonexty"
-    l2 = Config(;x,y, fill, fillcolor, line, kwargs...)
+    l2 = Config(;x, y, fill)
+    kws = _linestyle!(l2.line; kwargs...)
+    kws = _fillstyle!(l2; kws...)
+    _merge!(l2; kws...)
+
     append!(p.data, (l1, l2))
+    p
+end
+
+
+# image
+"""
+    image!([p::Plot], img_url; [x],[y],[sizex],[sizey], kwargs...)
+
+Plot image, by url, onto background of plot.
+
+* `x`,`y`,`sizex`, `sizey` specify extent via `[x, x+sizex] × [y-sizey, y]`.
+* pass `sizing="stretch"` to fill space.
+* other arguments cf. [plotly examples](https://plotly.com/javascript/images/).
+
+# Example
+```
+img = "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/Julia_Programming_Language_Logo.svg/320px-Julia_Programming_Language_Logo.svg.png"
+plot(;xlims=(0,1), ylims=(0,1), legend=false);
+image!(img; sizing="stretch")
+plot!(x -> x^2; linewidth=10, linecolor=:black)
+```
+"""
+image!(img; kwargs...) = image!(current_plot[], img; kwargs...)
+function image!(p::Plot, img;
+                x=nothing,
+                y=nothing,
+                sizex = nothing,
+                sizey = nothing,
+                kwargs...)
+    isempty(p.layout.images) && (p.layout.images = Config[])
+
+    ex = extrema(p)
+    x0,x1 = ex.x
+    y0,y1 = ex.y
+    x = isnothing(x) ? x0 : x
+    y = isnothing(y) ? y1 : y
+    sizex = isnothing(sizex) ? x1 - x : sizex
+    sizey = isnothing(sizey) ? y - y0 : sizey
+    image = Config(;source=img, x, y, sizex, sizey,
+                   xref="x", yref="y",
+                   layer="below")
+    _merge!(image; kwargs...)
+    push!(p.layout.images, image)
     p
 end

@@ -1,14 +1,21 @@
 ## ----
 ## plot has many different interfaces for dispatch
+##
+
+
+## ---
+
+
 """
     plot(x, y, [z]; [linecolor], [linewidth], [legend], kwargs...)
     plot(f::Function, a, [b]; kwargs...)
+    plot(pts; kwargs...)
 
 Create a line plot.
 
 Returns a `Plot` instance from [PlotlyLight](https://github.com/JuliaComputing/PlotlyLight.jl)
 
-* `x`,`y` points to plot. NaN values in `y` break the line
+* `x`,`y` points to plot. NaN values in `y` break the line. Can be specified through a container, `pts` of ``(x,y)`` or ``(x,y,z)`` values.
 * `a`, `b`: the interval to plot a function over can be given by two numbers or if just `a` then by `extrema(a)`.
 * `linecolor`: color of line
 * `linewidth`: width of line
@@ -43,9 +50,9 @@ p
 !!! note "Warning"
     You may need to run the first plot cell twice to see an image.
 """
-function plot(x, ys...; kwargs...)
+function plot(x, y, zs...; kwargs...)
     p = _new_plot(; kwargs...)
-    plot!(p, x, ys...; kwargs...)
+    plot!(p, x, y, zs...; kwargs...)
     p
 end
 
@@ -61,24 +68,8 @@ plot(f::Function, ab; kwargs...) = plot(f, extrema(ab)...; kwargs...)
 # default
 plot(f::Function; kwargs...) = plot(f, -5, 5; kwargs...)
 
-"""
-    plot(; layout::Config?, config::Config?, kwargs...)
-
-Pass keyword arguments through `Config` and onto `PlotlyLight.Plot`.
-"""
-function plot(; layout::Union{Nothing, Config}=nothing,
-              config::Union{Nothing, Config}=nothing,
-              width=800, height=600,
-              xlims=nothing, ylims=nothing,
-              legend=nothing,
-              aspect_ratio = nothing,
-              kwargs...)
-    p = _new_plot(;width, height,xlims, ylims, legend, aspect_ratio)
-    plot!(p; layout, config, kwargs...)
-    p
-end
-
-
+# makie style
+plot(pts; kwargs...) = plot(unzip(pts)...; kwargs...)
 
 """
     plot!([p::Plot], x, y; kwargs...)
@@ -96,6 +87,9 @@ function plot!(p::Plot, x, y;
     _push_line_trace!(p, x, y′; label, kwargs...)
     p
 end
+
+plot!(pts; kwargs...) = plot!(current_plot[], pts; kwargs...)
+plot!(p::Plot, pts; kwargs...) = plot!(p, unzip(pts)...; kwargs...)
 
 # pass through to Javascript; like Plot...
 plot!(; kwargs...) = plot!(current_plot[]; kwargs...)
@@ -116,9 +110,9 @@ function _push_line_trace!(p, x, y;
                            label = nothing, kwargs...
                            )
     c = Config(; x, y, mode=mode)
-    _linestyle!(c; kwargs...)
     _merge!(c; name=label, fill)
-    _merge!(c; kwargs...)
+    kws = _linestyle!(c.line; kwargs...)
+    _merge!(c; kws...)
     push!(p.data, c)
 end
 
@@ -132,17 +126,12 @@ function plot!(p::Plot, x, y, z;
     c = Config(;x,y,z,type="scatter3d", mode="lines")
     _merge!(c; name=label)
     _camera_position!(p.layout.scene.camera; center, up, eye)
-    _linestyle!(c; kwargs...)
+    kws = _linestyle!(c.line; kwargs...)
+    _merge!(c; kws...)
     push!(p.data, c)
     p
 end
 
-function plot!(p::Plot, x; type=nothing, mode=nothing, kwargs...)
-    c = Config(;x)
-    _merge!(c, type=type, mode=mode)
-    push!(p.data, c)
-    p
-end
 
 function plot!(p::Plot, f::Function, a, b; kwargs...)
     x, y = unzip(f, a, b)
@@ -196,7 +185,7 @@ end
 # 2-3
 """
     plot((f,g), a, b; kwargs...)
-    plot!([p::PLot], (f,g), a, b; kwargs...)
+    plot!([p::Plot], (f,g), a, b; kwargs...)
 
 Make parametric plot from tuple of functions, `f` and `g`.
 """
@@ -227,4 +216,35 @@ function plot!(p::Plot, uv::NTuple{N,Function}, a, b=nothing; kwargs...) where {
     end
 
     plot!(p, (fᵢ.(t) for fᵢ ∈ uv)...; kwargs...)
+end
+
+
+
+## --- This is `plot` from PlotlyLight
+# No default, see below
+#plot(; kw...) = plot(get(kw, :type, :scatter); kw...)
+
+Base.propertynames(::typeof(plot)) = sort!(collect(keys(PlotlyLight.schema.traces)))
+Base.getproperty(::typeof(plot), x::Symbol) = (; kw...) -> plot(x; kw...)
+
+function plot(trace::Symbol; kw...)
+    PlotlyLight.check_attributes(trace; kw...)
+    plot(; type=trace, kw...)
+end
+
+"""
+    plot(; layout::Config?, config::Config?, kwargs...)
+
+Pass keyword arguments through `Config` and onto `PlotlyLight.Plot`.
+"""
+function plot(; layout::Union{Nothing, Config}=nothing,
+              config::Union{Nothing, Config}=nothing,
+              width=800, height=600,
+              xlims=nothing, ylims=nothing,
+              legend=nothing,
+              aspect_ratio = nothing,
+              kwargs...)
+    p = _new_plot(;width, height,xlims, ylims, legend, aspect_ratio)
+    plot!(p; layout, config, kwargs...)
+    p
 end
