@@ -31,7 +31,7 @@ function annotate!(p::Plot, x, y, txt;
 
     textposition = _something(strip(join(something.((halign, valign), ""), " ")))
     #_merge!(cfg; textposition)
-    _textstyle!(cfg; color, family, pointsize, rotation, textposition, kwargs...)
+    _textstyle!(cfg.textfont; color, family, pointsize, rotation, textposition, kwargs...)
 
     push!(p.data, cfg)
     p
