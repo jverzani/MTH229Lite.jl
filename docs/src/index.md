@@ -177,7 +177,7 @@ This package, like `MTH229`, also provides the pedagogical functions `bisection`
 For example, the value of `pi` solves `sin(x) = 0` and from a graph this zero is easily seen to be *between* ``3`` and ``4``:
 
 ```@example lite
-bisection(sin, (3, 4))
+bisection(sin, 3, 4)
 ```
 
 The graphic produced illustrates the divide-and-conquer algorithm used by the bisection method.
