@@ -166,7 +166,7 @@ The `D` function will take a symbolic derivative of a function, as with `D(sin)`
 
 Two methods to  *numerically* find a solution to the equation ``f(x)=0`` are illustrated at [mth229.github.io](https://mth229.github.io):
 
-* The *bisection* method. For a continuous function, `f`, this method guarantees a solution within a **bracketing** interval `[a,b]`. Use this when it is easy to see a zero **between** two values.
+* The *bisection* method. For a continuous function, `f`, this method guarantees a solution within a **bracketing** interval `[a,b]`. Use this when it is easy (by the intermediate value theorem) to see a zero **between** two values.
 
 * *Newton's* method, which rapidly solves the equation from an *initial* guess, provided the function is well behaved and the guess is a good one. Use this when it is known a zero is **near** an initial value.
 
@@ -180,12 +180,12 @@ For example, the value of `pi` solves `sin(x) = 0` and from a graph this zero is
 bisection(sin, 3, 4)
 ```
 
-The graphic produced illustrates the divide-and-conquer algorithm used by the bisection method.
+The graphic produced (though not in these notes) illustrates the divide-and-conquer algorithm used by the bisection method.
 
 
 To solve ``f(x) = g(x)``, an auxiliary function ``h(x) = f(x)-g(x)`` is typically used.
 
-For example, so solve when ``1 + cosh(x/6)`` is equal to ``sinh(x/5)`` a plot shows an answer *near* ``10``:
+For example, to solve when ``1 + cosh(x/6)`` is equal to ``sinh(x/5)`` a plot shows an answer *near* ``10``:
 
 ```@example lite
 f(x) = 1 + cosh(x/6)
