@@ -36,7 +36,7 @@ Like the `MTH229` package, this pulls in various helper functions and also loads
 
 The [`PlotlyLightLite`](https://jverzani.github.io/PlotlyLightLite.jl/dev/) package is  loaded by `MTH229Lite`,  a lite version of a `Plots.jl` utilizing the small but powerful `PlotlyLight` package.
 
-The symbolic math package `SymPy` is not loaded, as it is with the `MTH229` package. The `SimpleExpressions` package is provided, which has support for making symbolic expressions. It is very limited, but can still be useful.
+The symbolic math package `SymPy` is not loaded, as it is with the `MTH229` package. The `SimpleExpressions` package is provided, which has support for making callable symbolic expressions that can be used in place of anonymous functions. It is intentionally very limited, but can still be useful.
 
 ## Functions and expressions
 
@@ -53,9 +53,10 @@ u(1), f(1)
 ```
 
 The object `u` is quite different from `f`, a function, in that it is a symbolic expression that can be subsequently manipulated. For examples, functions can't simply be added or squared, but expressions can be.
+
 An expression, like `u`, has its "call" method overloaded so that `u(1)` substitutes in for `x`. When a parameter is used (the `p` in the `@symbolic` call above) one can call `u(x,p)` to substitute in for both `x` and `p`; `u(x)` to substitute in for `x` (leaving `p`), or `u(:,p)` to substitute in for just `p` (leaving `x`).
 
-A symbolic expression can be used in place of a function for higher order functions, such as `plot`, `lim`, `riemann`, etc.
+A symbolic expression can be used in place of a function for higher-order functions, such as `plot`, `lim`, `riemann`, etc.
 
 
 ## Plotting
@@ -105,7 +106,7 @@ delete!(current().layout, :height) # hide
 to_documenter(current())           # hide
 ```
 
-Symbolic equations have both the left and right-hand sides plotted:
+Symbolic equations, produced using `~` to distinguish the left- and right-hand sides,  have both the left and right-hand sides plotted with separate traces:
 
 ```@example lite
 @symbolic x
@@ -163,16 +164,37 @@ The `D` function will take a symbolic derivative of a function, as with `D(sin)`
 
 ## Zero finding
 
-As illustrated at [mth229.github.io](https://mth229.github.io), an equation ``f(x)=0`` can be solved *numerically* by a few methods:
+Two methods to  *numerically* find a solution to the equation ``f(x)=0`` are illustrated at [mth229.github.io](https://mth229.github.io):
 
-* The *bisection* method. For a continuous function, `f`, this method guarantees a solution within a **bracketing** interval `[a,b]`.
-* *Newton's* method. This rapidly solves the equation from an *initial* guess, provided the function is well behaved and the guess is a good one.
+* The *bisection* method. For a continuous function, `f`, this method guarantees a solution within a **bracketing** interval `[a,b]`. Use this when it is easy to see a zero **between** two values.
+
+* *Newton's* method, which rapidly solves the equation from an *initial* guess, provided the function is well behaved and the guess is a good one. Use this when it is known a zero is **near** an initial value.
 
 (There are many more methods, of course, zero finding by the secant method being one of the oldest known mathematical algorithms.)
 
-This package, like `MTH229`, also provides the functions `bisection` and `newton` for carrying out these two algorithms.
+This package, like `MTH229`, also provides the pedagogical functions `bisection` and `newton` for carrying out these two algorithms.
 
-To solve ``f(x) = g(x)``, an auxiliary function ``h(x) = f(x)-g(x)`` is used.
+For example, the value of `pi` solves `sin(x) = 0` and from a graph this zero is easily seen to be *between* ``3`` and ``4``:
+
+```@example lite
+bisection(sin, 3, 4)
+```
+
+The graphic produced illustrates the divide-and-conquer algorithm used by the bisection method.
+
+
+To solve ``f(x) = g(x)``, an auxiliary function ``h(x) = f(x)-g(x)`` is typically used.
+
+For example, so solve when ``1 + cosh(x/6)`` is equal to ``sinh(x/5)`` a plot shows an answer *near* ``10``:
+
+```@example lite
+f(x) = 1 + cosh(x/6)
+g(x) = sinh(x/5)
+h(x) = f(x) - g(x)
+newton(h, 10)
+```
+
+----
 
 More generally, the `Roots` package provides `find_zero` as an interface to several methods. (The `fzero` function is an alias).
 
@@ -187,19 +209,24 @@ When a function is *not* continuous, such as $f(x) = 1/x$ at $0$, these bracketi
 find_zero(1/x, (-1, 1))
 ```
 
-Solving ``f(x) = g(x)`` is done by solving the related function `h(x) = f(x) - g(x) = 0`.
-
 ### Symbolic equations
 
 The `SimpleExpressions` package provides a  means to specify a symbolic equation with the `~` operator  (`=` is assignment, `==` is for relaxed comparison -- e.g. ignoring type, `===` is for identical testing). This notation is used by `SymPy` and was borrowed from `Symbolics`.
 
 The `plot` generic has a method for symbolic equations which plots *both* functions over the interval.
 
-The  `solve` generic has these variants for such symbolic equations
+Symbolic equations can be used in place of an auxiliary function:
 
-* `solve(eqn, a)` uses the hybrid secant method starting at `a`, where `a` is a *good* initial guess
-* `solve(eqn, (a,b))` uses a bisection method for a bracketing interval, `(a,b)`, of any length
-* `solve(eqn, I)`, **where** `I` is an interval (`a..b`), uses `find_zeros` to scan for all zeros.
+```@example lite
+@symbolic x
+find_zero(cos(x) ~ sin(x), (0, pi/2))
+```
+
+This package extends the  `solve` generic to have these variants for such symbolic equations
+
+* `solve(eqn, a)` uses the hybrid secant method of `fzero` starting at `a`, where `a` is a *near*by initial guess
+* `solve(eqn, (a,b))` uses the bisection method ofr `fzero` for a bracketing interval, `(a,b)`, when the zero is *between* ``a`` and ``b``.
+* `solve(eqn, I)`, **where** `I` is an interval specified through `a..b`, uses `find_zeros` to scan for all zeros.
 * `solve(eqn)` attempts to solve the symbolic equation by applying inverse functions. It can also solve polynomials using their roots.
 
 This example illustrates using `scatter!` to add a few points (see the more on plotting section):
@@ -218,7 +245,7 @@ delete!(current().layout, :height) # hide
 to_documenter(current())           # hide
 ```
 
-Here is an example that illustrates the mean value theorem and the helper functions `secant(f, a, b)` and `tangent(f, c)`.
+Here is an example that illustrates the mean value theorem and the helper functions `secant(f, a, b)` and `tangent(f, c)` from this package.
 
 ```@example lite
 @symbolic x
@@ -270,14 +297,14 @@ A box with square base is to be constructed from 108 inches of material. What di
 
 This is a classic optimization problem which is solvable using techniques for a continuous scalar function over a closed interval. To get there, we identify the constraint: ``S = 108 = 2a^2 + 4\cdot a \cdot h``. The function to maximize is ``V= a \cdot a \cdot h``
 
-We show how to solve this using functions
+We show how to solve this using functions:
 
 ```@example lite
 h(a) = (108 - 2a^2)/(4a) # solve the constraint for h
 V(a) = a^2 * h(a)
 ```
 
-Now, `a` can't be negative, and can't be bigger than ``\sqrt{108/2}``:
+Now, as all dimensions are non-negative, `a` can't be negative, and can't be bigger than ``\sqrt{108/2}``:
 
 ```@example lite
 I = 0..sqrt(108/2)
@@ -312,12 +339,12 @@ cps = find_zeros(V', I)
 To solve this symbolically is possible, but requires a sleight of hand as to solve for `h` we make it symbolic and use `a` as a parameter:
 
 ```@example lite
-@symbolic ℎ 𝑎         # sleight of hand here where 𝑎 is Symbolic, 𝑎 parameter
+@symbolic ℎ 𝑎         # sleight of hand here where ℎ is Symbolic, 𝑎 parameter
 constraint = 108 ~ 2𝑎^2 + 4𝑎*ℎ
 soln = solve(constraint)
 ```
 
-Then `𝑎` is made symbolic and substituted in for `𝑎` which allows us to proceed:
+Then `𝑎` is made symbolic and substituted in for the parameter `𝑎` which allows us to proceed:
 
 ```@example lite
 @symbolic 𝑎
