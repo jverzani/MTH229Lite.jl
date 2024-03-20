@@ -34,7 +34,7 @@ Like the `MTH229` package, this pulls in various helper functions and also loads
 
 `MTH229` also loads the `SymPy` package for symbolic math and anticipates the use of `Plots`.
 
-The [`PlotlyLightLite`](https://jverzani.github.io/PlotlyLightLite.jl/dev/) package is  loaded by `MTH229Lite`,  a lite version of a `Plots.jl` utilizing the small but powerful `PlotlyLight` package.
+The [`BinderPlots`](https://jverzani.github.io/BinderPlots.jl/dev/) package is  loaded by `MTH229Lite`,  a lite version of a `Plots.jl` utilizing the small but powerful `PlotlyLight` package.
 
 The symbolic math package `SymPy` is not loaded, as it is with the `MTH229` package. The `SimpleExpressions` package is provided, which has support for making callable symbolic expressions that can be used in place of anonymous functions. It is intentionally very limited, but can still be useful.
 
@@ -61,7 +61,7 @@ A symbolic expression can be used in place of a function for higher-order functi
 
 ## Plotting
 
-As mentioned, this package avoids using `Plots.jl` for plotting, as that package can be resource intensive. This package uses a light-weight alternative which utilizes basically the same interface for the basic graphics of calculus. It is provided by `PlotlyLightLite`, a bare-bones package leveraging the powerful `PlotlyLight` package.
+As mentioned, this package avoids using `Plots.jl` for plotting, as that package can be resource intensive. This package uses a light-weight alternative which utilizes basically the same interface for the basic graphics of calculus. It is provided by `BinderPlots`, a bare-bones package leveraging the powerful `PlotlyLight` package.
 
 The simplest means to plot a function `f` over the interval `[a,b]` is the pattern `plot(f, a, b)`. For example:
 

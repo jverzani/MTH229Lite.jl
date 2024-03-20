@@ -41,7 +41,7 @@ surface!(xs, ys, map(x -> x .+ 1, z1), colorscale="Viridis", showscale=false, op
 surface!(xs, ys, map(x -> x .- 1, z1), colorscale="Viridis", showscale=false, opacity=0.9)
 ```
 
-`Julia` users would typically use a matrix to hold the `z` data, but Javascript users would expect a vector of vectors, as above. As `PlotlyLight` just passes on the data to Javascript, the above is perfectly acceptable. Indeed `PlotlyLightLite` converts matrices to this format in such plots.
+`Julia` users would typically use a matrix to hold the `z` data, but Javascript users would expect a vector of vectors, as above. As `PlotlyLight` just passes on the data to Javascript, the above is perfectly acceptable. Indeed `BinderPlots` converts matrices to this format in such plots.
 
 (The keyword arguments above come from `Plotly`, not `Plots`.)
 

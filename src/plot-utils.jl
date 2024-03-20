@@ -62,8 +62,8 @@ end
 
 
 ## -----
-import .PlotlyLightLite: plot, plot!, implicit_plot, implicit_plot!
-import .PlotlyLightLite: _new_plot
+import .BinderPlots: plot, plot!, implicit_plot, implicit_plot!
+import .BinderPlots: _new_plot
 
 """
     plotif(f, g, a, b)

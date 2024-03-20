@@ -17,17 +17,18 @@ current() = current_plot[]
 # make a new plot by calling `PlotlyLight.Plot`
 function _new_plot(;
                    width=800, height=600,
-                   xlims=nothing, ylims=nothing,
+                   xlim=nothing, xlims=xlim,
+                   ylim=nothing, ylims=ylim,
                    legend = nothing,
                    aspect_ratio=nothing,
                    kwargs...)
+
     p = Plot(Config[],
              Config(), # layout
              Config(responsive=true) ) # config
     current_plot[] = p
 
     if first_plot[]
-        @info "For the first plot, you may need to re-run your command to see the plot"
         first_plot[] = false
     end
 
@@ -149,9 +150,9 @@ scroll_zoom!(x::Bool) = scroll_zoom!(current_plot[], x)
 # linestyle: solic, dot, dashdot, ...
 # lineshape: linear, hv, vh, hvh, vhv, spline
 function _linestyle!(cfg::Config;
-                     linecolor = nothing, # string, symbol, RGB?
-                     linewidth = nothing, # pixels
-                     linestyle = nothing, # solid, dot, dashdot,
+                     lc=nothing, linecolor = lc, # string, symbol, RGB?
+                     lw=nothing, width=lw, linewidth = width, # pixels
+                     style=nothing, ls=style, linestyle = ls, # solid, dot, dashdot,
                      lineshape = nothing,
                      kwargs...)
     _merge!(cfg; color=linecolor, width=linewidth, dash=linestyle,
@@ -161,24 +162,29 @@ end
 
 
 function _markerstyle!(cfg::Config; # .marker
-                       markershape = nothing,
-                       markersize  = nothing,
-                       markercolor = nothing,
+                       shape = nothing, markershape = shape,
+                       ms=nothing, markersize  = ms,
+                       mc=nothing, markercolor = mc,
                        kwargs...)
     _merge!(cfg; symbol=markershape, size=markersize, color=markercolor)
     kwargs
 end
 
 function _textstyle!(cfg::Config;
-                     color     = nothing,
                      family    = nothing,
                      pointsize = nothing,
+                     halign    = nothing,
+                     valign    = nothing,
                      rotation  = nothing,
+                     color     = nothing,
                      kwargs...)
+    # https://plotly.com/javascript/reference/layout/annotations/
     _merge!(cfg, # textftont
             color=color,
             family=family,
             size=pointsize,
+            align=halign,  # one of "left","center","right"
+            valign=valign, # one of "top", "middle", "bottom"
             textangle=rotation)
     kwargs
 end
@@ -187,8 +193,8 @@ end
 # XXX test this! clean up code calling style! functions (kwargs)
 # XXX image
 function _fillstyle!(cfg::Config;
-                     fillcolor = nothing, # string, symbol, RGB?
-                     opacity = nothing,
+                     fc=nothing, fillcolor = fc, # string, symbol, RGB?
+                     fillalpha=nothing, opacity = fillalpha,
                      kwargs...)
     _merge!(cfg; fillcolor=fillcolor, opacity)
     kwargs

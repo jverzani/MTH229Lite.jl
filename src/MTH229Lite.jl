@@ -12,7 +12,7 @@ Exports:
 * `tangent(f,c)` and `secant(f,a,b)` for creating tangent and secant line functions
 * `riemann` a simple Riemann sum function. This package also exports `QuadGK` for real-world usage.
 * The operator `'` is overloaded for functions to find the derivative using the `ForwardDiff` package. See `D` also.
-* The [PlotlyLightLite](https://jverzani.github.io/PlotlyLightLite.jl/dev/) package provides a basic plotting interface to `PlotlyLight`.
+* The [BinderPlots](https://jverzani.github.io/BinderPlots.jl/dev/) package provides a basic plotting interface to `PlotlyLight`.
 * The [SimpleExpressions](https://jverzani.github.io/SimpleExpressions.jl/dev/) package is included to create simple expressions to use in place of functions. There is no `SymPy` package provided, as is done with `MTH229`.
 """
 module MTH229Lite
@@ -20,9 +20,9 @@ module MTH229Lite
 using Reexport
 @reexport using LinearAlgebra
 
-@info "Loading `PlotlyLightLite` for plotting. Also adding `plot` etc. See `?plot` for details."
-include("plotly_light_lite/PlotlyLightLite.jl")
-@reexport using .PlotlyLightLite
+@info "Loading `BinderPlots` for plotting. Also adding `plot` etc. See `?plot` for details."
+include("binder_plots/BinderPlots.jl")
+@reexport using .BinderPlots
 
 @info "Loading `Roots` for solving `f(x)=0`: `fzero`, `fzeros`, etc."
 @reexport using Roots
