@@ -1,3 +1,3 @@
 ```@autodocs
-Modules = [MTH229Lite, MTH229Lite.PlotlyLightLite]
+Modules = [MTH229Lite, MTH229Lite.BinderPlots]
 ```
