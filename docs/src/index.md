@@ -38,6 +38,9 @@ The [`BinderPlots`](https://jverzani.github.io/BinderPlots.jl/dev/) package is  
 
 The symbolic math package `SymPy` is not loaded, as it is with the `MTH229` package. The `SimpleExpressions` package is provided, which has support for making callable symbolic expressions that can be used in place of anonymous functions. It is intentionally very limited, but can still be useful.
 
+!!! note "SymPy"
+    The [![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/mth229/229-projects/lite?labpath=blank-notebook.ipynb) image contains `SymPy` and that package can be easily loaded through `using SymPy`.
+
 ## Functions and expressions
 
 There is no additional support for Base `Julia` as regards the defining of functions.
@@ -128,7 +131,7 @@ lim((cos(x) - 1)/x^2, 0)
 
 (It also hints at the numeric instability possible with this approach.)
 
-While graphical approaches to limits are also possible, the `limit` function of `SymPy` is not provided.
+While graphical approaches to limits are also possible, the `limit` function of `SymPy` is only available from that package. (Which can easily be loaded using the binder image.)
 
 
 ## Derivatives
@@ -411,3 +414,7 @@ solve(Vb ~ p, (0, 15), p = 473), solve(Vb ~ p, (0, 15), p = 473/2)
 
 !!! note "`@symbolic_expression`"
     The `quadgk` function is not registered to work with symbolic values, like `b` above. Just evaluating `quadgk(dv, 0, b)` will error. The non-exported macro `@symbolic_expression` creates a symbolic expression -- a deferred function evaluation --  from a function call. This allows the expression to be used as a function, such as is done in the last line above.
+
+
+!!! note "SymPy"
+    The use of `SymPy` for solving symbolic equations is much more natural, as there no distinction is made between a symbolic value and a symbolic parameter. The best rational for `SimpleExpressions` is for use to avoid the relatively painless step of defining auxiliary functions.
