@@ -109,7 +109,7 @@ export contour, contour!, heatmap, heatmap!
 export surface, surface!, wireframe, wireframe!
 export implicit_plot, implicit_plot!
 export quiver, quiver!, arrow, arrow!
-export annotate, annotate!, title!, size!, legend!
+export annotate, annotate!, text, title!, size!, legend!
 export xlabel!, ylabel!, xlims!, ylims!, xaxis!, yaxis!
 export rect!, circle!, hline!, vline!
 export ★, ★!, ziptie, ziptie!
