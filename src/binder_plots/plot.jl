@@ -21,7 +21,7 @@ Returns a `Plot` instance from [PlotlyLight](https://github.com/JuliaComputing/P
 * `linewidth`: width of line
 * `label` in legend
 
-Other keyword arguments include `width` and `height`, `xlims` and `ylims`, `legend`, `aspect_ratio`.
+Other keyword arguments include `size=(width=X, height=Y)`, `xlims` and `ylims`, `legend`, `aspect_ratio`.
 
 Provides an interface like `Plots.plot` for plotting a function `f` using `PlotlyLight`. This just scratches the surface, but `PlotlyLight` allows full access to the underlying `JavaScript` [library](https://plotly.com/javascript/) library.
 
@@ -239,12 +239,12 @@ Pass keyword arguments through `Config` and onto `PlotlyLight.Plot`.
 """
 function plot(; layout::Union{Nothing, Config}=nothing,
               config::Union{Nothing, Config}=nothing,
-              width=800, height=600,
+              size=(width=800, height=600),
               xlims=nothing, ylims=nothing,
               legend=nothing,
               aspect_ratio = nothing,
               kwargs...)
-    p = _new_plot(;width, height,xlims, ylims, legend, aspect_ratio)
+    p = _new_plot(;size, xlims, ylims, legend, aspect_ratio)
     plot!(p; layout, config, kwargs...)
     p
 end
