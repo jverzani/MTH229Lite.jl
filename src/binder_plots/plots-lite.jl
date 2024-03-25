@@ -15,8 +15,9 @@ Not typically needed, as it is implicit in most mutating calls, though may be co
 current() = current_plot[]
 
 # make a new plot by calling `PlotlyLight.Plot`
+# doesn't consume
 function _new_plot(;
-                   width=800, height=600,
+                   windowsize=nothing, size=windowsize, # named tuple (width=, height=)
                    xlim=nothing, xlims=xlim,
                    ylim=nothing, ylims=ylim,
                    legend = nothing,
@@ -32,7 +33,8 @@ function _new_plot(;
         first_plot[] = false
     end
 
-    size!(p, width=width, height=height)
+    # size is specified through a keyed object
+    size!(p, size)
     xlims!(p, xlims)
     ylims!(p, ylims)
 
@@ -42,6 +44,7 @@ function _new_plot(;
 
     p
 end
+
 
 # plot attributes
 
@@ -114,6 +117,16 @@ function size!(p::Plot; width=nothing, height=nothing)
 end
 size!(;width=nothing, height=nothing) = size!(current_plot[]; width, height)
 
+size!(s) = size!(current_plot[], size)
+size!(p::Plot, ::Nothing) = p
+function size!(p::Plot, s)
+    width = get(s, :width, nothing)
+    height = get(s, :height, nothing)
+    size!(p; width, height)
+end
+
+
+
 "`xlims!(p, lims)` set `x` limits of plot"
 function xlims!(p::Plot, lims)
     p.layout.xaxis.range = lims
@@ -155,11 +168,11 @@ function _linestyle!(cfg::Config;
                      style=nothing, ls=style, linestyle = ls, # solid, dot, dashdot,
                      lineshape = nothing,
                      kwargs...)
+
     _merge!(cfg; color=linecolor, width=linewidth, dash=linestyle,
             shape=lineshape)
     kwargs
 end
-
 
 function _markerstyle!(cfg::Config; # .marker
                        shape = nothing, markershape = shape,
