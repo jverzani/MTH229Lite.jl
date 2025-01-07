@@ -374,10 +374,9 @@ uuid = "56ddb016-857b-54e1-b83d-db4d58db5568"
 version = "1.11.0"
 
 [[deps.MacroTools]]
-deps = ["Markdown", "Random"]
-git-tree-sha1 = "2fa9ee3e63fd3a4f7a9a4f4744a52f4856de82df"
+git-tree-sha1 = "72aebe0b5051e5143a079a4685a46da330a40472"
 uuid = "1914dd2f-81c6-5fcd-8719-6d5c9610ff09"
-version = "0.5.13"
+version = "0.5.15"
 
 [[deps.Markdown]]
 deps = ["Base64"]
@@ -531,10 +530,10 @@ uuid = "9e88b42a-f829-5b0c-bbe9-9e923198166b"
 version = "1.11.0"
 
 [[deps.SimpleExpressions]]
-deps = ["CallableExpressions", "Combinatorics", "CommonEq", "CommonSolve", "TermInterface"]
-git-tree-sha1 = "e733f43d9b305fb98d8e38b9d715811a1abd591d"
+deps = ["CallableExpressions", "Combinatorics", "CommonEq", "CommonSolve", "TermInterface", "TupleTools"]
+git-tree-sha1 = "edeb0cf6417bd901b08f6dfbea526bb9d7356d99"
 uuid = "deba94f7-f32a-40ad-b45e-be020a5ded2f"
-version = "1.1.5"
+version = "1.1.7"
 
     [deps.SimpleExpressions.extensions]
     SimpleExpressionsAbstractTreesExt = "AbstractTrees"
@@ -625,6 +624,11 @@ version = "2.0.0"
 deps = ["InteractiveUtils", "Logging", "Random", "Serialization"]
 uuid = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 version = "1.11.0"
+
+[[deps.TupleTools]]
+git-tree-sha1 = "41e43b9dc950775eac654b9f845c839cd2f1821e"
+uuid = "9d95972d-f1c8-5527-a6e0-b4b365fa01f6"
+version = "1.6.0"
 
 [[deps.UUIDs]]
 deps = ["Random", "SHA"]
