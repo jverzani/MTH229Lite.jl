@@ -531,9 +531,9 @@ version = "1.11.0"
 
 [[deps.SimpleExpressions]]
 deps = ["CallableExpressions", "Combinatorics", "CommonEq", "CommonSolve", "TermInterface", "TupleTools"]
-git-tree-sha1 = "c49d27fe241f7835ebb67c9ce153b7a9ffb14af9"
+git-tree-sha1 = "f2d5fca8000c92f8971dd8a179523453e0e4cd62"
 uuid = "deba94f7-f32a-40ad-b45e-be020a5ded2f"
-version = "1.1.9"
+version = "1.1.10"
 
     [deps.SimpleExpressions.extensions]
     SimpleExpressionsAbstractTreesExt = "AbstractTrees"
