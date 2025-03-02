@@ -8,13 +8,13 @@ BinderPlots = "5e41213d-62ae-4ae0-a5b0-867e743d03c0"
 CalculusWithJulia = "a2e0e22d-7d4c-5312-9169-8b992201a882"
 QuadGK = "1fd47b50-473d-5c70-9696-f719f8f3bcdc"
 Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
-SimpleExpressions = "deba94f7-f32a-40ad-b45e-be020a5ded2f"
+SymEngine = "123dc426-2d89-5057-bbad-38513e3affd8"
 
 [compat]
 CalculusWithJulia = "0.2"
 QuadGK = "2"
 Reexport = "1"
-SimpleExpressions = "1"
+SymEngine = "0.12,0.13"
 julia = "1.10"
 
 [extras]

@@ -10,15 +10,9 @@ module MTH229Lite
 using Reexport
 @reexport using CalculusWithJulia
 @reexport using QuadGK
-@reexport using SimpleExpressions
+@reexport using SymEngine
 @reexport using BinderPlots
 
-## simpleexpressions
-import CalculusWithJulia.Roots.CommonSolve: solve
-function solve(ex::SimpleExpressions.SymbolicEquation, I::Interval; kwargs...)
-    find_zeros(ex, I; kwargs...)
-end
-Base.adjoint(f::SimpleExpressions.AbstractSymbolic) = SimpleExpressions.D(f)
 
 ###
 export fisheye
@@ -172,6 +166,48 @@ fubini(@nospecialize(f), zs, ys, xs; rtol=missing, kws...) =
            rtol=rtol)
 
 endpoints(ys,x) = ((f,x) -> isa(f, Function) ? f(x...) : f).(ys, Ref(x))
+
+
+## SymEngine extension
+struct SymbolicEquation
+    lhs
+    rhs
+end
+
+Base.:~(l::SymEngine.Basic, r::SymEngine.Basic) = SymbolicEquation(l,r)
+Base.:~(l::Number, r::SymEngine.Basic) = SymbolicEquation(Basic(l),r)
+Base.:~(l::SymEngine.Basic, r::Number) = SymbolicEquation(l,Basic(r))
+
+(eq::SymbolicEquation)(x) = float(eq.lhs(x)) - float(eq.rhs(x))
+
+## SymEngine
+import CalculusWithJulia.Roots.CommonSolve: solve
+function solve(ex::SymbolicEquation, x₀, args...; kwargs...)
+    find_zero(ex, x₀; kwargs...)
+end
+
+function solve(ex::SymbolicEquation, a::Real, b::Real; kwargs...)
+    find_zeros(ex, (a,b); kwargs...)
+end
+
+solve(ex::SymbolicEquation, a; kwargs...) =
+    find_zero(ex,a;kwargs...)
+function solve(ex::SymbolicEquation, I::Interval; kwargs...)
+    find_zeros(ex , I; kwargs...)
+end
+
+Base.adjoint(f::Basic) = diff(f,only(free_symbols(f)))
+
+BinderPlots.plot(f::Basic, args...; kwargs...) = plot(x -> float(f(x)), args...; kwargs...)
+BinderPlots.plot!(f::Basic, args...; kwargs...) = plot!(x -> float(f(x)), args...; kwargs...)
+
+function BinderPlots.plot!(t::Val{:scatter}, p::BinderPlots.Plot,
+               f::SymbolicEquation, y, z;
+               seriestype::Symbol=:lines,
+               kwargs...)
+    plot!(p, [x -> float(f.lhs(x)), x -> float(f.rhs(x))], y, z; seriestype, kwargs...)
+    p
+end
 
 
 end
