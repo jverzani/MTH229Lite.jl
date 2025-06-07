@@ -11,6 +11,7 @@ using Reexport
 @reexport using CalculusWithJulia
 @reexport using QuadGK
 @reexport using SymEngine
+@reexport using SimpleExpressions
 @reexport using BinderPlots
 
 
