@@ -11,10 +11,10 @@ Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 SimpleExpressions = "deba94f7-f32a-40ad-b45e-be020a5ded2f"
 
 [compat]
-CalculusWithJulia = "0.2"
+CalculusWithJulia = "0.2,0.3"
 QuadGK = "2"
 Reexport = "1"
-SimpleExpressions = "1"
+SimpleExpressions = "1.16"
 julia = "1.10"
 
 [extras]
