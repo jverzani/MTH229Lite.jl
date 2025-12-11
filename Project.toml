@@ -16,7 +16,7 @@ CalculusWithJulia = "0.2,0.3"
 QuadGK = "2"
 Reexport = "1"
 SimpleExpressions = "1.1.17"
-SymEngine = "0.12,0.13"
+SymEngine = "0.11,0.12,0.13"
 julia = "1.10"
 
 [extras]
