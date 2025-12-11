@@ -14,7 +14,7 @@ SimpleExpressions = "deba94f7-f32a-40ad-b45e-be020a5ded2f"
 CalculusWithJulia = "0.2,0.3"
 QuadGK = "2"
 Reexport = "1"
-SimpleExpressions = "1.16"
+SimpleExpressions = "1.17"
 julia = "1.10"
 
 [extras]
