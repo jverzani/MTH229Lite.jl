@@ -12,10 +12,10 @@ SimpleExpressions = "deba94f7-f32a-40ad-b45e-be020a5ded2f"
 SymEngine = "123dc426-2d89-5057-bbad-38513e3affd8"
 
 [compat]
-CalculusWithJulia = "0.2"
+CalculusWithJulia = "0.2,0.3"
 QuadGK = "2"
 Reexport = "1"
-SimpleExpressions = "1.1.12"
+SimpleExpressions = "1.1.17"
 SymEngine = "0.12,0.13"
 julia = "1.10"
 
