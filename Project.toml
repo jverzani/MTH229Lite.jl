@@ -1,18 +1,16 @@
 name = "MTH229Lite"
 uuid = "dac9518e-8c5a-47d4-a461-ad2fd2d449e5"
-version = "1.0.0"
 authors = ["jverzani <jverzani@gmail.com> and contributors"]
+version = "1.0.0"
 
 [deps]
 BinderPlots = "5e41213d-62ae-4ae0-a5b0-867e743d03c0"
 CalculusWithJulia = "a2e0e22d-7d4c-5312-9169-8b992201a882"
-Giac = "e4421f97-9838-4fd0-9fa5-94f11373bf78"
 QuadGK = "1fd47b50-473d-5c70-9696-f719f8f3bcdc"
 Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 SimpleExpressions = "deba94f7-f32a-40ad-b45e-be020a5ded2f"
 
 [compat]
-BinderPlots = "1.0.17"
 CalculusWithJulia = "0.2,0.3"
 QuadGK = "2"
 Reexport = "1"
