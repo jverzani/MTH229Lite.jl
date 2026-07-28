@@ -2,7 +2,7 @@
 
 julia_version = "1.12.0"
 manifest_format = "2.0"
-project_hash = "d96c00403e7c512869b50658ba21c70f88d816d5"
+project_hash = "3fc96786c32016887be27807509b5b347cced005"
 
 [[deps.Accessors]]
 deps = ["CompositionsBase", "ConstructionBase", "Dates", "InverseFunctions", "MacroTools"]
@@ -317,7 +317,7 @@ version = "1.11.0"
 [[deps.IntervalSets]]
 git-tree-sha1 = "79d6bd28c8d9bccc2229784f1bd637689b256377"
 uuid = "8197267c-284f-5f27-9208-e0e47529a953"
-version = "0.7.14"
+version = "0.7.13"
 
     [deps.IntervalSets.extensions]
     IntervalSetsRandomExt = "Random"
