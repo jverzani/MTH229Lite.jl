@@ -7,13 +7,58 @@ This package reexports functions from the `CalculusWithJulia` package.
 module MTH229Lite
 
 
+if isdefined(Base, :Experimental) && isdefined(Base.Experimental, Symbol("@optlevel"))
+    @eval Base.Experimental.@optlevel 1
+end
+
 using Reexport
 @reexport using CalculusWithJulia
 @reexport using QuadGK
-@reexport using SymEngine
 @reexport using SimpleExpressions
+@reexport using Giac
 @reexport using BinderPlots
 
+## Giac differences
+include("giac.jl")
+export @syms, integrate, limit
+
+## BinderPlots
+function __init__()
+    BinderPlots.PlotlyLight.settings.layout.width = 800
+    BinderPlots.PlotlyLight.settings.layout.height = 500
+end
+
+
+function BinderPlots.plot!(plt::BinderPlots.Plot, ex::GiacExpr, args...; kwargs...)
+    if contains(string(ex), "=")
+        l,r = ex.lhs(), ex.rhs()
+        plot!(plt, lambdify(l), args...; kwargs...)
+        plot!(plt, lambdify(r), args...; kwargs...)
+    else
+        plot!(plt, lambdify(ex), args...; kwargs...)
+    end
+    plt
+end
+
+function BinderPlots.plot(ex::GiacExpr, args...; kwargs...)
+    plt = plot(; kwargs...)
+    plot!(plt, ex, args...; kwargs...)
+    plt
+end
+
+function CalculusWithJulia.plotif(f::Function, g::Function, a::Real, b::Real; kwargs...)
+    plot(f, a, b; line=(1, :black), title="Plot of f colored when g ≥ 0")
+    gg = x -> g(x) ≥ 0 ? f(x) : NaN
+    plot!(gg; line=(5, :red, :dot))
+end
+
+
+## simpleexpressions
+import CalculusWithJulia.Roots.CommonSolve: solve
+function solve(ex::SimpleExpressions.SymbolicEquation, I::Interval; kwargs...)
+    find_zeros(ex, I; kwargs...)
+end
+Base.adjoint(f::SimpleExpressions.AbstractSymbolic) = SimpleExpressions.D(f)
 
 ###
 export fisheye
@@ -101,8 +146,17 @@ function bisection(f::Function, a, b)
 end
 
 
+"""
+    newton(f, [fp], x0; verbose=false, kwargs...)
 
-newton(f, fp, x0; kwargs...) = Roots.find_zero((f,fp), x0, Roots.Newton(); kwargs...)
+Run Newton's method to find a zero of `f` near `x0`.
+"""
+function newton(f, fp, x0; verbose=false, kwargs...)
+    tracks = verbose ? Roots.Tracks() : Roots.NullTracks()
+    α = Roots.find_zero((f,fp), x0, Roots.Newton(); tracks, kwargs...)
+    verbose && display(tracks)
+    α
+end
 newton(f, x0; kwargs...) = newton(f, f', x0; kwargs...)
 
 
@@ -167,48 +221,6 @@ fubini(@nospecialize(f), zs, ys, xs; rtol=missing, kws...) =
            rtol=rtol)
 
 endpoints(ys,x) = ((f,x) -> isa(f, Function) ? f(x...) : f).(ys, Ref(x))
-
-
-## SymEngine extension
-struct SymbolicEquation
-    lhs
-    rhs
-end
-
-Base.:~(l::SymEngine.Basic, r::SymEngine.Basic) = SymbolicEquation(l,r)
-Base.:~(l::Number, r::SymEngine.Basic) = SymbolicEquation(Basic(l),r)
-Base.:~(l::SymEngine.Basic, r::Number) = SymbolicEquation(l,Basic(r))
-
-(eq::SymbolicEquation)(x) = float(eq.lhs(x)) - float(eq.rhs(x))
-
-## SymEngine
-import CalculusWithJulia.Roots.CommonSolve: solve
-function solve(ex::SymbolicEquation, x₀, args...; kwargs...)
-    find_zero(ex, x₀; kwargs...)
-end
-
-function solve(ex::SymbolicEquation, a::Real, b::Real; kwargs...)
-    find_zeros(ex, (a,b); kwargs...)
-end
-
-solve(ex::SymbolicEquation, a; kwargs...) =
-    find_zero(ex,a;kwargs...)
-function solve(ex::SymbolicEquation, I::Interval; kwargs...)
-    find_zeros(ex , I; kwargs...)
-end
-
-Base.adjoint(f::Basic) = diff(f,only(free_symbols(f)))
-
-BinderPlots.plot(f::Basic, args...; kwargs...) = plot(x -> float(f(x)), args...; kwargs...)
-BinderPlots.plot!(f::Basic, args...; kwargs...) = plot!(x -> float(f(x)), args...; kwargs...)
-
-function BinderPlots.plot!(t::Val{:scatter}, p::BinderPlots.Plot,
-               f::SymbolicEquation, y, z;
-               seriestype::Symbol=:lines,
-               kwargs...)
-    plot!(p, [x -> float(f.lhs(x)), x -> float(f.rhs(x))], y, z; seriestype, kwargs...)
-    p
-end
 
 
 end
