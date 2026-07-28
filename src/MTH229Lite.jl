@@ -7,51 +7,11 @@ This package reexports functions from the `CalculusWithJulia` package.
 module MTH229Lite
 
 
-if isdefined(Base, :Experimental) && isdefined(Base.Experimental, Symbol("@optlevel"))
-    @eval Base.Experimental.@optlevel 1
-end
-
 using Reexport
 @reexport using CalculusWithJulia
 @reexport using QuadGK
 @reexport using SimpleExpressions
-@reexport using Giac
 @reexport using BinderPlots
-
-## Giac differences
-include("giac.jl")
-export @syms, integrate, limit
-
-## BinderPlots
-function __init__()
-    BinderPlots.PlotlyLight.settings.layout.width = 800
-    BinderPlots.PlotlyLight.settings.layout.height = 500
-end
-
-
-function BinderPlots.plot!(plt::BinderPlots.Plot, ex::GiacExpr, args...; kwargs...)
-    if contains(string(ex), "=")
-        l,r = ex.lhs(), ex.rhs()
-        plot!(plt, lambdify(l), args...; kwargs...)
-        plot!(plt, lambdify(r), args...; kwargs...)
-    else
-        plot!(plt, lambdify(ex), args...; kwargs...)
-    end
-    plt
-end
-
-function BinderPlots.plot(ex::GiacExpr, args...; kwargs...)
-    plt = plot(; kwargs...)
-    plot!(plt, ex, args...; kwargs...)
-    plt
-end
-
-function CalculusWithJulia.plotif(f::Function, g::Function, a::Real, b::Real; kwargs...)
-    plot(f, a, b; line=(1, :black), title="Plot of f colored when g ≥ 0")
-    gg = x -> g(x) ≥ 0 ? f(x) : NaN
-    plot!(gg; line=(5, :red, :dot))
-end
-
 
 ## simpleexpressions
 import CalculusWithJulia.Roots.CommonSolve: solve
@@ -146,17 +106,8 @@ function bisection(f::Function, a, b)
 end
 
 
-"""
-    newton(f, [fp], x0; verbose=false, kwargs...)
 
-Run Newton's method to find a zero of `f` near `x0`.
-"""
-function newton(f, fp, x0; verbose=false, kwargs...)
-    tracks = verbose ? Roots.Tracks() : Roots.NullTracks()
-    α = Roots.find_zero((f,fp), x0, Roots.Newton(); tracks, kwargs...)
-    verbose && display(tracks)
-    α
-end
+newton(f, fp, x0; kwargs...) = Roots.find_zero((f,fp), x0, Roots.Newton(); kwargs...)
 newton(f, x0; kwargs...) = newton(f, f', x0; kwargs...)
 
 
